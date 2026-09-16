@@ -3,7 +3,7 @@
 Living document. Read it before every action. Update it when you decide something or finish a
 milestone. Keep entries to one line each so parallel edits merge cleanly.
 
-Last updated: 2026-09-16 (adaptive Legendary, photo share frame)
+Last updated: 2026-09-16 (hard cuts between crowd clips)
 
 ## Status
 
@@ -123,16 +123,16 @@ The crowd video is the stage. Everything else stays out of its way.
 
 ## Crowd
 
-Three muted, looping, always-playing videos stacked in one box. Level sets opacities with a
-600 ms transition:
+Three muted, looping, always-playing videos stacked in one box. Level picks exactly one clip
+with a **hard cut**, no crossfade (decided 2026-09-16):
 
-| Level | bored | mid | excited | Effects |
-| --- | --- | --- | --- | --- |
-| Watching | 1.0 | 0 | 0 | flat house light |
-| Nodding | 0.5 | 0.5 | 0 | slow light sweep |
-| Moving | 0 | 1.0 | 0 | light sweep on the beat |
-| Roaring | 0 | 0.4 | 0.6 | camera shake on the beat, brighter lights |
-| Legendary | 0 | 0 | 1.0 | strobe flashes on the beat, "CROWD GOES WILD" callout |
+| Level | Clip | Effects |
+| --- | --- | --- |
+| Watching | bored | flat house light |
+| Nodding | bored | slightly brighter lights |
+| Moving | mid | light sweep on the beat |
+| Roaring | excited | camera shake on the beat, brighter lights |
+| Legendary | excited | strobe flashes on the beat, "CROWD GOES WILD" callout, figure glow |
 
 Reduced-motion preference disables shake and flashes only. Missing or failed videos fall back to a
 dark gradient so the stage still works.
@@ -234,6 +234,7 @@ Model and WASM load from third-party CDNs at runtime. No error tracking, no anal
 | 2026-09-16 | All typography in the Silkscreen pixel font | One skin for every visible element, as requested |
 | 2026-09-16 | Legendary floor and hold ease with song progress: 97 / 3 s at the start → 82 / 0.8 s at the end | Start really hard, get progressively easier, so the climax lands late in the song |
 | 2026-09-16 | Share frame is the real camera image at the freeze moment, figure faintly overlaid | A photo is the thing people actually want to keep; still local-only, nothing uploaded |
+| 2026-09-16 | Crowd clips hard-cut instead of crossfading; bored/bored/mid/excited/excited across the five levels | Cuts feel like a live broadcast; blends looked muddy |
 
 ## Open questions
 

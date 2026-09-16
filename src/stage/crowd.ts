@@ -5,16 +5,17 @@ export const CROWD_CLIPS = ['bored', 'mid', 'excited'] as const;
 export type CrowdClip = (typeof CROWD_CLIPS)[number];
 export type ClipStatus = 'loading' | 'ready' | 'missing';
 
+/** Hard cuts: exactly one clip visible per level. Legendary adds strobes and the callout on top. */
 const OPACITY: Record<Level, Record<CrowdClip, number>> = {
   watching: { bored: 1, mid: 0, excited: 0 },
-  nodding: { bored: 0.5, mid: 0.5, excited: 0 },
+  nodding: { bored: 1, mid: 0, excited: 0 },
   moving: { bored: 0, mid: 1, excited: 0 },
-  roaring: { bored: 0, mid: 0.4, excited: 0.6 },
+  roaring: { bored: 0, mid: 0, excited: 1 },
   legendary: { bored: 0, mid: 0, excited: 1 },
 };
 
 /**
- * Three always-playing muted loops blended by level, plus beat-driven lights, shake and flashes.
+ * Three always-playing muted loops, hard-cut by level, plus beat-driven lights, shake and flashes.
  * Missing clips fall back to a gradient so the stage still runs.
  */
 export class Crowd {

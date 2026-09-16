@@ -73,7 +73,8 @@ button {
 .crowd video {
   object-fit: cover;
   opacity: 0;
-  transition: opacity 600ms ease;
+  /* Hard cuts between clips, no crossfade. */
+  transition: none;
   filter: saturate(0.95) brightness(0.9);
 }
 
