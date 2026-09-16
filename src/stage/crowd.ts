@@ -1,25 +1,25 @@
 import { levelIndex } from './types';
 import type { Level } from './types';
 
-export const CROWD_CLIPS = ['bored', 'mid', 'excited'] as const;
+export const CROWD_CLIPS = ['bored', 'mid', 'hyped', 'excited'] as const;
 export type CrowdClip = (typeof CROWD_CLIPS)[number];
 export type ClipStatus = 'loading' | 'ready' | 'missing';
 
-/** Hard cuts: exactly one clip visible per level. Legendary adds strobes and the callout on top. */
+/** Hard cuts: exactly one clip visible per level. The excited clip is reserved for Legendary. */
 const OPACITY: Record<Level, Record<CrowdClip, number>> = {
-  watching: { bored: 1, mid: 0, excited: 0 },
-  nodding: { bored: 1, mid: 0, excited: 0 },
-  moving: { bored: 0, mid: 1, excited: 0 },
-  roaring: { bored: 0, mid: 0, excited: 1 },
-  legendary: { bored: 0, mid: 0, excited: 1 },
+  watching: { bored: 1, mid: 0, hyped: 0, excited: 0 },
+  nodding: { bored: 1, mid: 0, hyped: 0, excited: 0 },
+  moving: { bored: 0, mid: 1, hyped: 0, excited: 0 },
+  roaring: { bored: 0, mid: 0, hyped: 1, excited: 0 },
+  legendary: { bored: 0, mid: 0, hyped: 0, excited: 1 },
 };
 
 /**
- * Three always-playing muted loops, hard-cut by level, plus beat-driven lights, shake and flashes.
+ * Four always-playing muted loops, hard-cut by level, plus beat-driven lights, shake and flashes.
  * Missing clips fall back to a gradient so the stage still runs.
  */
 export class Crowd {
-  readonly status: Record<CrowdClip, ClipStatus> = { bored: 'loading', mid: 'loading', excited: 'loading' };
+  readonly status: Record<CrowdClip, ClipStatus> = { bored: 'loading', mid: 'loading', hyped: 'loading', excited: 'loading' };
   private readonly videos = new Map<CrowdClip, HTMLVideoElement>();
   private level: Level = 'watching';
   private beatTimer: number | undefined;

@@ -236,7 +236,7 @@ function onFrame(frame: PoseFrame): void {
       streak: e?.streak ?? 0,
       song: song.loaded ? `${song.time().toFixed(1)}s / ${song.duration.toFixed(0)}s` : song.missingReason,
       'beat offset': `${song.beatOffset.toFixed(2)}s  ( [ ] )`,
-      crowd: `${crowd.status.bored} / ${crowd.status.mid} / ${crowd.status.excited}`,
+      crowd: `${crowd.status.bored} / ${crowd.status.mid} / ${crowd.status.hyped} / ${crowd.status.excited}`,
       ghost: ghost.enabled,
       motion: reducedMotion ? 'reduced' : 'full',
     });

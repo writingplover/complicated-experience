@@ -3,7 +3,7 @@
 Living document. Read it before every action. Update it when you decide something or finish a
 milestone. Keep entries to one line each so parallel edits merge cleanly.
 
-Last updated: 2026-09-16 (hard cuts between crowd clips)
+Last updated: 2026-09-16 (fourth crowd clip; excited reserved for Legendary)
 
 ## Status
 
@@ -12,8 +12,8 @@ Last updated: 2026-09-16 (hard cuts between crowd clips)
 - Still to check on the demo laptop: GPU vs CPU delegate in the debug panel, calibration by
   raising hands, the auto dominant-hand guess, and the 5 s loop seam of the crowd clips.
 - Repo: Vite + TypeScript. Dependencies: `vite`, `typescript`, `@mediapipe/tasks-vision` 1.0.1.
-- Crowd clips in `public/crowd/` are the generated loops (5 s each), transcoded from the 1080p
-  originals to 720p H.264 (0.5–1.7 MB each). Originals stay outside the repo.
+- Crowd clips in `public/crowd/` are the four generated loops (5 s each), transcoded from the 1080p
+  originals to 720p H.264 (0.5–2.2 MB each). Originals stay outside the repo.
 - Camera path verified on the demo laptop: MediaPipe loads and tracks. The player is now a small
   portrait panel bottom right so the crowd video is the focus.
 - The song must be dropped at `public/local/complicated.mp3` on each machine. The folder is
@@ -123,15 +123,15 @@ The crowd video is the stage. Everything else stays out of its way.
 
 ## Crowd
 
-Three muted, looping, always-playing videos stacked in one box. Level picks exactly one clip
-with a **hard cut**, no crossfade (decided 2026-09-16):
+Four muted, looping, always-playing videos stacked in one box. Level picks exactly one clip
+with a **hard cut**, no crossfade (decided 2026-09-16). The excited clip only appears at Legendary:
 
 | Level | Clip | Effects |
 | --- | --- | --- |
 | Watching | bored | flat house light |
 | Nodding | bored | slightly brighter lights |
 | Moving | mid | light sweep on the beat |
-| Roaring | excited | camera shake on the beat, brighter lights |
+| Roaring | hyped | camera shake on the beat, brighter lights |
 | Legendary | excited | strobe flashes on the beat, "CROWD GOES WILD" callout, figure glow |
 
 Reduced-motion preference disables shake and flashes only. Missing or failed videos fall back to a
@@ -139,8 +139,8 @@ dark gradient so the stage still works.
 
 ### Files
 
-`public/crowd/crowd-1-bored.mp4`, `crowd-2-mid.mp4`, `crowd-3-excited.mp4`. H.264 MP4, 1280×720,
-5 s loops, 0.5–1.7 MB each, transcoded from the generated 1080p originals with
+`public/crowd/crowd-1-bored.mp4`, `crowd-2-mid.mp4`, `crowd-3-hyped.mp4`, `crowd-4-excited.mp4`.
+H.264 MP4, 1280×720, 5 s loops, 0.5–2.2 MB each, transcoded from the generated 1080p originals with
 `ffmpeg -vf scale=1280:-2 -an -c:v libx264 -crf 24 -pix_fmt yuv420p -movflags +faststart`.
 
 ### Generation prompts (Veo, Runway, Sora or similar)
@@ -153,7 +153,9 @@ seamless loop, no text, no logos, no performer in frame.*
    slightly, flat dim house lights, low energy, almost no movement.*
 2. mid: *…the crowd nods and sways to a mid-tempo rock song, heads bobbing, a few hands raised,
    moving lights sweep slowly across, warm engaged energy.*
-3. excited: *…the crowd jumps in unison, all hands in the air, phone lights waving, strobes,
+3. hyped: *…the crowd cheers with most hands in the air, a couple of crowd surfers, big grins,
+   high energy but no strobes yet.*
+4. excited: *…the crowd jumps in unison, all hands in the air, phone lights waving, strobes,
    confetti falling, roaring, maximum energy.*
 
 ## Song
@@ -234,7 +236,8 @@ Model and WASM load from third-party CDNs at runtime. No error tracking, no anal
 | 2026-09-16 | All typography in the Silkscreen pixel font | One skin for every visible element, as requested |
 | 2026-09-16 | Legendary floor and hold ease with song progress: 97 / 3 s at the start → 82 / 0.8 s at the end | Start really hard, get progressively easier, so the climax lands late in the song |
 | 2026-09-16 | Share frame is the real camera image at the freeze moment, figure faintly overlaid | A photo is the thing people actually want to keep; still local-only, nothing uploaded |
-| 2026-09-16 | Crowd clips hard-cut instead of crossfading; bored/bored/mid/excited/excited across the five levels | Cuts feel like a live broadcast; blends looked muddy |
+| 2026-09-16 | Crowd clips hard-cut instead of crossfading | Cuts feel like a live broadcast; blends looked muddy |
+| 2026-09-16 | Fourth clip "hyped" for Roaring; the excited clip appears only at Legendary | The hardest level deserves footage nobody has seen yet in the run |
 
 ## Open questions
 
