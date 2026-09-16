@@ -1,0 +1,2 @@
+# pnpm settings. Packages must be at least 3 days old before pnpm will install them.
+minimumReleaseAge: 4320

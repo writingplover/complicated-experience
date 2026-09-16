@@ -1,0 +1,104 @@
+/* Shell styles only. Scene styles live in each scene's folder, prefixed with the scene id. */
+
+:root {
+  --bg: #0b0b0d;
+  --fg: #f4f1ea;
+  --muted: #9a968d;
+  --accent: #ff2d95;
+  --accent-2: #c8ff00;
+  --font-display: 'Arial Black', Impact, 'Helvetica Neue', Arial, sans-serif;
+  --font-body: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+img,
+video,
+canvas {
+  max-width: 100%;
+  display: block;
+}
+
+/* Every scene is a full-viewport section laid out as a grid, so a single wrapper child fills it. */
+.scene {
+  position: relative;
+  display: grid;
+  min-height: 100dvh;
+  padding: clamp(1rem, 4vw, 3rem);
+  overflow: hidden;
+}
+
+.shell-nav {
+  position: fixed;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 100;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.375rem;
+  max-width: 60vw;
+}
+
+.shell-nav a {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--fg);
+  background: rgb(0 0 0 / 0.55);
+  border: 1px solid rgb(255 255 255 / 0.2);
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+  backdrop-filter: blur(6px);
+}
+
+.shell-nav a.is-active {
+  color: var(--bg);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.shell-empty,
+.shell-error {
+  display: grid;
+  place-items: center;
+  text-align: center;
+  color: var(--muted);
+}
+
+.shell-error {
+  border: 2px dashed var(--accent);
+  padding: 2rem;
+  margin: auto;
+}
+
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  background: rgb(255 255 255 / 0.08);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}

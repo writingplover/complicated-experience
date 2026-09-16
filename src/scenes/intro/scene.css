@@ -1,0 +1,79 @@
+.intro-wrap {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  gap: 0.5rem;
+}
+
+.intro-kicker {
+  margin: 0;
+  color: var(--accent-2);
+  font-size: 0.85rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+}
+
+.intro-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 10.5vw, 11rem);
+  white-space: nowrap;
+  line-height: 0.95;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  color: var(--accent);
+  text-shadow: 0.04em 0.04em 0 var(--fg);
+}
+
+.intro-letter {
+  display: inline-block;
+  animation: intro-drop 0.6s cubic-bezier(0.2, 0.9, 0.2, 1.2) both;
+  animation-delay: calc(var(--i) * 45ms);
+}
+
+.intro-sub {
+  margin: 0.5rem 0 0;
+  color: var(--muted);
+}
+
+.intro-cue {
+  margin-top: 3rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  animation: intro-bob 1.6s ease-in-out infinite;
+}
+
+/* A skate-shop checkerboard band along the bottom. */
+.intro-check {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 2.5rem;
+  background:
+    repeating-conic-gradient(var(--fg) 0 25%, transparent 0 50%) 0 0 / 2.5rem 2.5rem;
+  opacity: 0.9;
+}
+
+@keyframes intro-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-0.6em) rotate(-6deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes intro-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(0.35rem); }
+}
+
+.intro-still .intro-letter,
+.intro-still .intro-cue {
+  animation: none;
+}
