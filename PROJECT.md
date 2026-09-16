@@ -3,14 +3,14 @@
 Living document. Read it before every action. Update it when you decide something or finish a
 milestone. Keep entries to one line each so parallel edits merge cleanly.
 
-Last updated: 2026-09-16 (Legendary locked for the first 30 s)
+Last updated: 2026-09-16 (debug panel removed)
 
 ## Status
 
 - Design approved 2026-09-16. **All five build slots are implemented** and verified in demo mode:
   idle → calibrate → countdown → perform (energy, crowd blend, lights, ghost line) → final PNG.
-- Still to check on the demo laptop: GPU vs CPU delegate in the debug panel, calibration by
-  raising hands, the auto dominant-hand guess, and the 5 s loop seam of the crowd clips.
+- Still to check on the demo laptop: calibration by raising hands, the auto dominant-hand guess,
+  and the 5 s loop seam of the crowd clips.
 - Repo: Vite + TypeScript. Dependencies: `vite`, `typescript`, `@mediapipe/tasks-vision` 1.0.1.
 - Crowd clips in `public/crowd/` are the four generated loops (5 s each), transcoded from the 1080p
   originals to 720p H.264 (0.5–2.2 MB each). Originals stay outside the repo.
@@ -23,7 +23,7 @@ Last updated: 2026-09-16 (Legendary locked for the first 30 s)
 ## Context
 
 - Song: "Complicated" by Avril Lavigne, debut single from *Let Go* (2002), 4 min 13 s in the file
-  we use, about 78 BPM (measure the first-beat offset in the debug panel).
+  we use, about 78 BPM (nudge the first-beat offset with `[` and `]` during a run).
 - Hardware: laptop webcam, laptop drives an external monitor in full-screen. Player stands 2–3 m
   from the camera, full body in frame.
 - The camera and pose data never leave the browser. Nothing is recorded or uploaded. The UI says so.
@@ -47,10 +47,10 @@ frame. The player should always look like the star; the crowd is emotional rewar
 | 4 | `perform` | The still zooms into the crowd (1.4 s) and the crowd clips start. Full song. Crowd, meter, ghost line live | Song ends, or Escape |
 | 5 | `final` | Frozen hero pose, score, peak level, title, Download PNG, Perform again | Space → `idle` |
 
-Keys: Space advances, Escape ends a performance, D toggles the debug panel, H swaps the dominant
-hand, G toggles the ghost line, R performs again, M toggles demo mode (synthetic performer, for
-testing without a camera). `?demo` in the URL starts in demo mode. The deck's transport buttons
-trigger the same actions.
+Keys: Space advances, Escape ends a performance, H swaps the dominant hand, G toggles the ghost
+line, R performs again, M toggles demo mode (synthetic performer, for testing without a camera),
+`[` and `]` nudge the beat offset by 0.05 s with a callout. `?demo` in the URL starts in demo
+mode. The deck's transport buttons trigger the same actions.
 
 ## Architecture
 
@@ -65,7 +65,6 @@ Single full-screen page. Static layers in `index.html`, one TypeScript module pe
 | Excitement meter + prompts | `prompts.ts` | Vertical pink meter (no labels), centre prompts, countdown, callouts, key hint |
 | Deck | `winamp.ts` | Compact Winamp-flavoured bar top right: LCD clock, spectrum, title marquee, progress, transport |
 | Final overlay | `final.ts` | Re-render the last pose at 1920×1080, compose PNG, download, perform again |
-| Debug panel | `debug.ts` | FPS, delegate, signals, energy, level, file status |
 | (no layer) | `pose.ts` | MediaPipe Pose Landmarker wrapper, emits landmarks per frame |
 | (no layer) | `demo.ts` | Synthetic landmark source with the same interface as `pose.ts` |
 | (no layer) | `calibration.ts` | Shoulder width, dominant hand, presence detection |
@@ -87,7 +86,7 @@ The crowd video is the stage. Everything else stays out of its way.
   Silkscreen pixel font): LCD clock, 19-bar spectrum fed by the five signals, title marquee, song
   progress, transport (reset, start, end, skip, camera/demo), ghost toggle, perform again. Only the
   Winamp elements the stage needs; no EQ, no playlist, no fake stats.
-- Prompts, countdown and callouts stay centred over the crowd. The debug panel docks under the deck.
+- Prompts, countdown and callouts stay centred over the crowd.
 - **Typography**: everything is set in Silkscreen (Google Fonts pixel font), uppercase, with hard
   pink and black drop shadows on the big words. Fallback is the system monospace when offline.
 
@@ -118,7 +117,7 @@ The crowd video is the stage. Everything else stays out of its way.
   reached at all, whatever the energy. After the lock, L starts at 97 with a 3 s hold and eases
   (smoothstep over the rest of the song) to 82 with a 0.8 s hold by the end. The last chorus is
   where it happens. Dropping a level requires energy 5 below the floor for 1 s (hysteresis). Rising
-  to the other levels is immediate. The debug panel shows the live floor or the lock.
+  to the other levels is immediate.
 - Beat streak: 4 consecutive on-beat peaks trigger a callout and a small energy bonus.
 - Target visible latency under 150 ms: no extra buffering between landmarks and the crowd.
 
@@ -168,7 +167,8 @@ seamless loop, no text, no logos, no performer in frame.*
 
 - `public/local/complicated.mp3`, loaded with `fetch` + `decodeAudioData`, played through an
   `AudioBufferSourceNode`. Time = `context.currentTime - startedAt`.
-- Beat grid: fixed BPM (78) plus a first-beat offset adjustable in the debug panel with `[` and `]`.
+- Beat grid: fixed BPM (78) plus a first-beat offset, nudged live with `[` and `]` (callout shows
+  the value).
   Timing scoring is phase-free, so a wrong offset only affects light sweeps and shake.
 - If the file is missing: the idle prompt says where to put it, and a performance still runs for
   60 s in silence with the phase-free timing signal. The existing YouTube helper is the fallback
@@ -194,18 +194,18 @@ Perform again restarts at the countdown with the same calibration.
 
 - Score = mean energy × 10 (0–1000), peak level = highest level held for at least 2 s.
 
-## Debug and demo
+## Demo mode
 
-- Debug panel (D): FPS, delegate, presence, dominant hand, five raw signals, raw and smoothed
-  energy, level, beat offset, whether song and crowd files loaded.
 - Demo mode (M or `?demo`): a synthetic performer whose energy cycles through all five levels over
   40 s. Used to test everything downstream of the sensor without a camera.
+- The debug panel was removed on 2026-09-16 (decision below). Signal values are visible in the
+  deck's spectrum; anything deeper goes through the browser console.
 
 ## Build order and time
 
 | Slot | Work | Done when |
 | --- | --- | --- |
-| 1 | pose + demo source, calibration, energy, debug panel | debug panel shows live signals |
+| 1 | pose + demo source, calibration, energy | live signals drive the meter |
 | 2 | crowd videos, lights, meter, HUD | level changes visibly move the crowd |
 | 3 | state flow, song, countdown, prompts | full run from step in to song end |
 | 4 | ghost line | suggestions appear and dissolve during perform |
@@ -242,6 +242,7 @@ Model and WASM load from third-party CDNs at runtime. No error tracking, no anal
 | 2026-09-16 | All typography in the Silkscreen pixel font | One skin for every visible element, as requested |
 | 2026-09-16 | Legendary floor and hold ease with song progress: 97 / 3 s at the start → 82 / 0.8 s at the end | Start really hard, get progressively easier, so the climax lands late in the song |
 | 2026-09-16 | Legendary hard-locked for the first 30 s of the song | It was reachable early with the streak bonus; the opening must never peak |
+| 2026-09-16 | Debug panel removed | Not needed on stage; the deck and the meter show what matters |
 | 2026-09-16 | Share frame is the real camera image at the freeze moment, figure faintly overlaid | A photo is the thing people actually want to keep; still local-only, nothing uploaded |
 | 2026-09-16 | Crowd clips hard-cut instead of crossfading | Cuts feel like a live broadcast; blends looked muddy |
 | 2026-09-16 | Fourth clip "hyped" for Roaring; the excited clip appears only at Legendary | The hardest level deserves footage nobody has seen yet in the run |
@@ -249,7 +250,7 @@ Model and WASM load from third-party CDNs at runtime. No error tracking, no anal
 
 ## Open questions
 
-- First-beat offset of the MP3 (set with `[` `]` in the debug panel, then hardcode it).
+- First-beat offset of the MP3 (nudge with `[` `]` during a run, then hardcode it in `main.ts`).
 - The 5 s crowd loops may show a seam; longer or cross-faded loops if it bothers anyone.
 - Which laptop and monitor for the demo; test camera framing at 2–3 m there.
 

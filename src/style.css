@@ -276,7 +276,7 @@ button {
   box-shadow: inset 1px 1px 0 var(--wa-pink-dark), inset -1px -1px 0 var(--wa-pink-light);
 }
 
-/* Deck + debug dock, top right */
+/* Deck dock, top right */
 .dock {
   top: 1rem;
   right: 1rem;
@@ -640,39 +640,6 @@ button {
   text-transform: uppercase;
   color: var(--wa-pink-light);
   opacity: 0.75;
-}
-
-/* ------------------------------------------------------------------ debug panel */
-.debug {
-  position: static;
-  width: 300px;
-  max-height: calc(100vh - 12rem);
-  overflow: auto;
-  padding: 0.75rem 1rem;
-  background: rgba(11, 11, 13, 0.85);
-  border: 2px solid var(--wa-black);
-  box-shadow: inset 1px 1px 0 var(--wa-pink-light), inset -1px -1px 0 var(--wa-pink-dark);
-  font-family: var(--wa-font);
-  font-size: 9px;
-  line-height: 1.9;
-  text-transform: uppercase;
-}
-
-.debug[hidden] {
-  display: none;
-}
-
-.debug-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  color: var(--muted);
-}
-
-.debug-value {
-  color: var(--fg);
-  text-align: right;
-  overflow-wrap: anywhere;
 }
 
 /* ------------------------------------------------------------------ final overlay */

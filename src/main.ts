@@ -1,7 +1,6 @@
 import './style.css';
 import { Calibrator, liveShoulderWidth } from './stage/calibration';
 import { Crowd } from './stage/crowd';
-import { DebugPanel } from './stage/debug';
 import { createDemoPose } from './stage/demo';
 import { FigureRenderer } from './stage/draw';
 import { EnergyEngine } from './stage/energy';
@@ -43,7 +42,6 @@ const prompts = new Prompts({
   meter: $('#meter'),
 });
 const crowd = new Crowd($('#crowd'), stage, $('#flash'), reducedMotion);
-const debug = new DebugPanel($('#debug'));
 const energy = new EnergyEngine(BPM);
 const song = new Song(SONG_URL, BPM);
 const ghost = new GhostLine(renderer);
@@ -58,9 +56,6 @@ let presentSince: number | null = null;
 let lastLevel: Level = 'watching';
 let performStartedMs = 0;
 let countdownTimers: number[] = [];
-let frameCount = 0;
-let fpsWindowStart = performance.now();
-let fps = 0;
 
 // ---------------------------------------------------------------------------------------------
 // Actions shared by keys and the deck buttons
@@ -136,8 +131,8 @@ async function useSource(kind: PoseSource['kind']): Promise<void> {
   deck.setSource(null);
   prompts.setHint(
     kind === 'demo'
-      ? 'Demo mode · M camera · Space start · Esc end · G ghost · R again · D debug'
-      : 'M demo · Space start · Esc end · H swap hand · G ghost · R again · D debug',
+      ? 'Demo mode · M camera · Space start · Esc end · G ghost · R again'
+      : 'M demo · Space start · Esc end · H swap hand · G ghost · R again',
   );
   if (kind === 'camera') prompts.setPrompt('Starting camera', 'Loading the pose model. This takes a few seconds the first time.');
   try {
@@ -156,12 +151,6 @@ async function useSource(kind: PoseSource['kind']): Promise<void> {
 
 function onFrame(frame: PoseFrame): void {
   const now = frame.timeMs;
-  frameCount += 1;
-  if (now - fpsWindowStart >= 1000) {
-    fps = (frameCount * 1000) / (now - fpsWindowStart);
-    frameCount = 0;
-    fpsWindowStart = now;
-  }
   const lm = frame.landmarks;
   const present = isPresent(lm);
   if (present) lastLandmarks = lm;
@@ -215,31 +204,6 @@ function onFrame(frame: PoseFrame): void {
   deck.tick();
   deck.setSong(song.time(), song.duration, playMode());
 
-  if (debug.visible) {
-    const e = lastEnergy;
-    debug.set({
-      source: source?.info ?? 'none',
-      fps: fps.toFixed(0),
-      state: machine.state,
-      present,
-      hand: `${energy.hand}${energy.handIsGuessed ? ' (guessing)' : ''}`,
-      strum: e?.signals.strum ?? 0,
-      body: e?.signals.body ?? 0,
-      timing: e?.signals.timing ?? 0,
-      scale: e?.signals.scale ?? 0,
-      variety: e?.signals.variety ?? 0,
-      raw: e?.raw ?? 0,
-      energy: e?.energy ?? 0,
-      level: e?.level ?? 'watching',
-      'legendary floor': energy.legendaryLocked ? 'locked for the first 30 s' : `${energy.legendaryFloor.toFixed(0)} for ${(energy.legendaryHoldMs / 1000).toFixed(1)}s`,
-      streak: e?.streak ?? 0,
-      song: song.loaded ? `${song.time().toFixed(1)}s / ${song.duration.toFixed(0)}s` : song.missingReason,
-      'beat offset': `${song.beatOffset.toFixed(2)}s  ( [ ] )`,
-      crowd: `${crowd.status.bored} / ${crowd.status.mid} / ${crowd.status.hyped} / ${crowd.status.excited}`,
-      ghost: ghost.enabled,
-      motion: reducedMotion ? 'reduced' : 'full',
-    });
-  }
 }
 
 function playMode(): PlayMode {
@@ -369,10 +333,6 @@ window.addEventListener('keydown', (event) => {
     case 'Escape':
       actions.end();
       break;
-    case 'd':
-    case 'D':
-      debug.toggle();
-      break;
     case 'h':
     case 'H':
       energy.setDominant(otherHand(energy.hand));
@@ -391,10 +351,9 @@ window.addEventListener('keydown', (event) => {
       actions.again();
       break;
     case '[':
-      song.beatOffset = Math.round((song.beatOffset - 0.05) * 100) / 100;
-      break;
     case ']':
-      song.beatOffset = Math.round((song.beatOffset + 0.05) * 100) / 100;
+      song.beatOffset = Math.round((song.beatOffset + (key === '[' ? -0.05 : 0.05)) * 100) / 100;
+      prompts.callout(`Beat ${song.beatOffset.toFixed(2)}s`);
       break;
   }
 });
@@ -407,7 +366,6 @@ window.addEventListener('resize', () => renderer.resize());
 async function boot(): Promise<void> {
   enter('idle');
   const params = new URLSearchParams(location.search);
-  if (params.has('debug')) debug.toggle();
   const loaded = song.load().then(() => {
     if (machine.state === 'idle') enter('idle');
   });

@@ -5,7 +5,7 @@
 export class Song {
   readonly bpm: number;
   readonly url: string;
-  /** Seconds from file start to the first beat. Adjust with [ and ] in the debug panel. */
+  /** Seconds from file start to the first beat. Nudge with [ and ] during a run. */
   beatOffset = 0;
   loaded = false;
   missingReason = 'not loaded yet';
