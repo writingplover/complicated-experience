@@ -16,11 +16,20 @@ export interface StrokeOptions {
  * Draws the player as a stick figure with a guitar on a full-stage canvas, mirrored so the
  * player sees themselves as in a mirror. Landmarks map with the same "cover" fit as the camera.
  */
+export interface FixedSize {
+  width: number;
+  height: number;
+}
+
 export class FigureRenderer {
   private readonly ctx: CanvasRenderingContext2D;
   private sourceAspect = 16 / 9;
 
-  constructor(private readonly canvas: HTMLCanvasElement) {
+  /** Pass `fixed` for an offscreen canvas that is not laid out by CSS (the final frame). */
+  constructor(
+    private readonly canvas: HTMLCanvasElement,
+    private readonly fixed?: FixedSize,
+  ) {
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('2d canvas not available');
     this.ctx = ctx;
@@ -32,6 +41,11 @@ export class FigureRenderer {
   }
 
   resize(): void {
+    if (this.fixed) {
+      this.canvas.width = this.fixed.width;
+      this.canvas.height = this.fixed.height;
+      return;
+    }
     const rect = this.canvas.getBoundingClientRect();
     const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
     this.canvas.width = Math.max(1, Math.round(rect.width * dpr));
@@ -156,14 +170,6 @@ export class FigureRenderer {
     const H = this.canvas.height;
     const contentH = Math.max(H, W / this.sourceAspect);
     return contentH * this.sourceAspect;
-  }
-
-  snapshot(): HTMLCanvasElement {
-    const copy = document.createElement('canvas');
-    copy.width = this.canvas.width;
-    copy.height = this.canvas.height;
-    copy.getContext('2d')?.drawImage(this.canvas, 0, 0);
-    return copy;
   }
 
   private polyline(points: Point[]): void {

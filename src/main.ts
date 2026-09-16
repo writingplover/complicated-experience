@@ -8,17 +8,20 @@ import { EnergyEngine } from './stage/energy';
 import type { EnergyState } from './stage/energy';
 import { FinalOverlay } from './stage/final';
 import { GhostLine } from './stage/ghost';
-import { Hud } from './stage/hud';
 import { createCameraPose } from './stage/pose';
 import { prefersReducedMotion } from './stage/prefs';
+import { Prompts } from './stage/prompts';
 import { Song } from './stage/song';
 import { StateMachine } from './stage/state';
-import { isPresent, otherHand } from './stage/types';
 import type { StageState } from './stage/state';
+import { isPresent, otherHand } from './stage/types';
 import type { Landmarks, Level, PoseFrame, PoseSource } from './stage/types';
+import { Deck } from './stage/winamp';
+import type { DeckActions, PlayMode } from './stage/winamp';
 
 const BPM = 78;
 const SONG_URL = '/local/complicated.mp3';
+const TRACK_TITLE = 'Avril Lavigne - Complicated (4:13)';
 const SONG_HINT = 'Drop the MP3 at public/local/complicated.mp3 for sound. Without it a run lasts 60 seconds.';
 
 function $<T extends HTMLElement = HTMLElement>(selector: string): T {
@@ -32,7 +35,13 @@ const cameraEl = $<HTMLVideoElement>('#camera');
 const reducedMotion = prefersReducedMotion();
 
 const renderer = new FigureRenderer($<HTMLCanvasElement>('#figure'));
-const hud = new Hud({ hud: $('#hud'), prompt: $('#prompt'), countdown: $('#countdown'), callout: $('#callout'), hint: $('#hint') });
+const prompts = new Prompts({
+  prompt: $('#prompt'),
+  countdown: $('#countdown'),
+  callout: $('#callout'),
+  hint: $('#hint'),
+  meterFill: $('#meter-fill'),
+});
 const crowd = new Crowd($('#crowd'), stage, $('#flash'), reducedMotion);
 const debug = new DebugPanel($('#debug'));
 const energy = new EnergyEngine(BPM);
@@ -40,14 +49,13 @@ const song = new Song(SONG_URL, BPM);
 const ghost = new GhostLine(renderer);
 const calibrator = new Calibrator();
 const machine = new StateMachine();
-const final = new FinalOverlay($('#final'), () => machine.set('idle'));
 
 let source: PoseSource | null = null;
 let unsubscribe: (() => void) | null = null;
 let lastLandmarks: Landmarks | null = null;
+let lastEnergy: EnergyState | null = null;
 let presentSince: number | null = null;
 let lastLevel: Level = 'watching';
-let lastEnergy: EnergyState | null = null;
 let performStartedMs = 0;
 let countdownTimers: number[] = [];
 let frameCount = 0;
@@ -55,7 +63,58 @@ let fpsWindowStart = performance.now();
 let fps = 0;
 
 // ---------------------------------------------------------------------------------------------
+// Actions shared by keys and the deck buttons
+
+const actions: DeckActions = {
+  start() {
+    if (!source) {
+      void useSource('camera');
+    } else if (machine.state === 'idle') {
+      machine.set('calibrate');
+    } else if (machine.state === 'calibrate') {
+      skipCalibration();
+    } else if (machine.state === 'final') {
+      machine.set('idle');
+    }
+    void crowd.play();
+  },
+  skip() {
+    if (machine.state === 'calibrate') skipCalibration();
+    else if (machine.state === 'idle' && source) machine.set('calibrate');
+  },
+  end() {
+    if (machine.state === 'perform') machine.set('final');
+    else if (machine.state === 'countdown' || machine.state === 'calibrate') machine.set('idle');
+  },
+  reset() {
+    if (machine.state === 'idle') enter('idle');
+    else machine.set('idle');
+  },
+  toggleSource() {
+    void useSource(source?.kind === 'demo' ? 'camera' : 'demo');
+  },
+  toggleGhost() {
+    ghost.enabled = !ghost.enabled;
+    deck.setGhost(ghost.enabled);
+  },
+  again() {
+    if (machine.state !== 'final' && machine.state !== 'idle') return;
+    if (!source) return;
+    resetRun();
+    machine.set('countdown');
+  },
+};
+
+const deck = new Deck($('#winamp'), actions);
+const final = new FinalOverlay($('#final'), () => actions.again());
+
+// ---------------------------------------------------------------------------------------------
 // Pose source
+
+function sourceAspect(): number {
+  if (source?.kind === 'camera' && cameraEl.videoWidth > 0) return cameraEl.videoWidth / cameraEl.videoHeight;
+  return 16 / 9;
+}
 
 async function useSource(kind: PoseSource['kind']): Promise<void> {
   unsubscribe?.();
@@ -63,15 +122,21 @@ async function useSource(kind: PoseSource['kind']): Promise<void> {
   cameraEl.hidden = kind === 'demo';
   source = kind === 'demo' ? createDemoPose(BPM) : createCameraPose(cameraEl);
   unsubscribe = source.onFrame(onFrame);
-  hud.setHint(kind === 'demo' ? 'DEMO MODE · M camera · D debug · Space start · Esc end' : 'M demo · D debug · Space start · Esc end · H swap hand');
-  if (kind === 'camera') hud.setPrompt('Starting camera', 'Loading the pose model. This takes a few seconds the first time.');
+  deck.setSource(null);
+  prompts.setHint(
+    kind === 'demo'
+      ? 'Demo mode · M camera · Space start · Esc end · G ghost · R again · D debug'
+      : 'M demo · Space start · Esc end · H swap hand · G ghost · R again · D debug',
+  );
+  if (kind === 'camera') prompts.setPrompt('Starting camera', 'Loading the pose model. This takes a few seconds the first time.');
   try {
     await source.start();
-    if (kind === 'camera') renderer.setSourceAspect(cameraEl.videoWidth / cameraEl.videoHeight);
+    renderer.setSourceAspect(sourceAspect());
+    deck.setSource(kind);
     if (machine.state === 'idle') enter('idle');
   } catch (err) {
     console.error('[stage] pose source failed', err);
-    hud.setPrompt('Camera unavailable', 'Allow the camera and reload, or press M for demo mode.');
+    prompts.setPrompt('Camera unavailable', 'Allow the camera and reload, or press M for demo mode.');
   }
 }
 
@@ -106,7 +171,7 @@ function onFrame(frame: PoseFrame): void {
       case 'calibrate': {
         if (present) renderer.drawFigure(lm, energy.hand, 'watching');
         const calibration = calibrator.update(lm, now);
-        hud.setProgress(calibrator.progress(now));
+        prompts.setProgress(calibrator.progress(now));
         if (calibration) {
           energy.setCalibration(calibration);
           machine.set('countdown');
@@ -119,11 +184,11 @@ function onFrame(frame: PoseFrame): void {
       case 'perform': {
         const state = energy.update(lm, now);
         lastEnergy = state;
-        hud.setEnergy(state.energy, state.level);
+        prompts.setMeter(state.energy);
         crowd.setLevel(state.level);
         if (song.beatTick()) crowd.beat();
-        if (state.streakHit) hud.callout('On the beat');
-        if (state.level === 'legendary' && lastLevel !== 'legendary') hud.callout('Crowd goes wild');
+        if (state.streakHit) prompts.callout('On the beat');
+        if (state.level === 'legendary' && lastLevel !== 'legendary') prompts.callout('Crowd goes wild');
         lastLevel = state.level;
         if (present) {
           renderer.drawFigure(lm, energy.hand, state.level);
@@ -133,6 +198,10 @@ function onFrame(frame: PoseFrame): void {
       }
     }
   }
+
+  deck.setSignals(machine.state === 'perform' ? (lastEnergy?.signals ?? null) : null, lastEnergy?.energy ?? 0);
+  deck.tick();
+  deck.setSong(song.time(), song.duration, playMode());
 
   if (debug.visible) {
     const e = lastEnergy;
@@ -154,53 +223,83 @@ function onFrame(frame: PoseFrame): void {
       song: song.loaded ? `${song.time().toFixed(1)}s / ${song.duration.toFixed(0)}s` : song.missingReason,
       'beat offset': `${song.beatOffset.toFixed(2)}s  ( [ ] )`,
       crowd: `${crowd.status.bored} / ${crowd.status.mid} / ${crowd.status.excited}`,
+      ghost: ghost.enabled,
       motion: reducedMotion ? 'reduced' : 'full',
     });
   }
 }
 
+function playMode(): PlayMode {
+  if (machine.state === 'perform') return 'playing';
+  if (machine.state === 'calibrate' || machine.state === 'countdown') return 'paused';
+  return 'stopped';
+}
+
 // ---------------------------------------------------------------------------------------------
 // States
 
-function enter(state: StageState): void {
-  stage.dataset.state = state;
+function marqueeFor(state: StageState): string {
   switch (state) {
     case 'idle':
-      final.hide();
-      energy.reset();
-      lastEnergy = null;
-      ghost.reset();
-      calibrator.reset();
-      presentSince = null;
-      lastLevel = 'watching';
-      crowd.setLevel('watching');
-      hud.setEnergy(0, 'watching');
-      hud.countdown(null);
+      return source ? 'Step in · press play' : 'Air Stage · press play';
+    case 'calibrate':
+      return 'Raise both hands';
+    case 'countdown':
+      return 'Get ready';
+    case 'perform':
+      return TRACK_TITLE;
+    case 'final':
+      return 'Hero pose · ↻ to perform again';
+  }
+}
+
+function resetRun(): void {
+  energy.reset();
+  lastEnergy = null;
+  ghost.reset();
+  calibrator.reset();
+  presentSince = null;
+  lastLevel = 'watching';
+  crowd.setLevel('watching');
+  prompts.setMeter(0);
+  prompts.countdown(null);
+}
+
+function enter(state: StageState): void {
+  stage.dataset.state = state;
+  if (state !== 'final') final.hide();
+  deck.setMarquee(marqueeFor(state));
+  switch (state) {
+    case 'idle':
+      resetRun();
       if (!source) {
-        hud.setPrompt('Air Stage', 'Press Space to turn on the camera, or M for demo mode.');
+        prompts.setPrompt('Air Stage', 'Press Space to turn on the camera, or M for demo mode.');
       } else {
-        hud.setPrompt('Step in', song.loaded ? 'Stand 2 to 3 metres from the camera, full body in frame.' : SONG_HINT);
+        prompts.setPrompt('Step in', song.loaded ? 'Stand 2 to 3 metres from the camera, full body in frame.' : SONG_HINT);
       }
       break;
     case 'calibrate':
-      hud.setPrompt('Raise both hands', 'Hold for two seconds. Raise one hand alone to make it your strumming hand.');
+      prompts.setPrompt('Raise both hands', 'Hold for two seconds. Raise one hand alone to make it your strumming hand.');
       break;
     case 'countdown':
-      hud.setPrompt('');
+      prompts.setPrompt('');
       runCountdown();
       break;
     case 'perform':
-      hud.setPrompt('');
-      hud.countdown(null);
+      prompts.setPrompt('');
+      prompts.countdown(null);
       performStartedMs = performance.now();
       void song.start();
       void crowd.play();
       break;
     case 'final': {
-      hud.setPrompt('');
+      prompts.setPrompt('');
       const stats = energy.stats();
       final.show({
-        figure: renderer.snapshot(),
+        landmarks: lastLandmarks,
+        hand: energy.hand,
+        level: lastEnergy?.level ?? 'watching',
+        sourceAspect: sourceAspect(),
         score: Math.round(stats.meanEnergy * 10),
         peakLevel: stats.peakLevel,
         peakAtSec: Math.max(0, (stats.peakAtMs - performStartedMs) / 1000),
@@ -220,12 +319,18 @@ song.onEnded(() => {
   if (machine.state === 'perform') machine.set('final');
 });
 
+function skipCalibration(): void {
+  const shoulderWidth = lastLandmarks ? liveShoulderWidth(lastLandmarks) : 0.15;
+  energy.setCalibration({ shoulderWidth, dominant: 'right', autoDominant: true });
+  machine.set('countdown');
+}
+
 function runCountdown(): void {
   clearCountdown();
-  hud.countdown(3);
+  prompts.countdown(3);
   countdownTimers = [
-    window.setTimeout(() => hud.countdown(2), 1000),
-    window.setTimeout(() => hud.countdown(1), 2000),
+    window.setTimeout(() => prompts.countdown(2), 1000),
+    window.setTimeout(() => prompts.countdown(1), 2000),
     window.setTimeout(() => machine.set('perform'), 3000),
   ];
 }
@@ -244,22 +349,10 @@ window.addEventListener('keydown', (event) => {
   switch (key) {
     case ' ':
       event.preventDefault();
-      if (!source) {
-        void useSource('camera');
-      } else if (machine.state === 'idle') {
-        machine.set('calibrate');
-      } else if (machine.state === 'calibrate') {
-        const shoulderWidth = lastLandmarks ? liveShoulderWidth(lastLandmarks) : 0.15;
-        energy.setCalibration({ shoulderWidth, dominant: 'right', autoDominant: true });
-        machine.set('countdown');
-      } else if (machine.state === 'final') {
-        machine.set('idle');
-      }
-      void crowd.play();
+      actions.start();
       break;
     case 'Escape':
-      if (machine.state === 'perform') machine.set('final');
-      else if (machine.state === 'countdown' || machine.state === 'calibrate') machine.set('idle');
+      actions.end();
       break;
     case 'd':
     case 'D':
@@ -268,11 +361,19 @@ window.addEventListener('keydown', (event) => {
     case 'h':
     case 'H':
       energy.setDominant(otherHand(energy.hand));
-      hud.callout(`${energy.hand} hand strums`);
+      prompts.callout(`${energy.hand} hand strums`);
       break;
     case 'm':
     case 'M':
-      void useSource(source?.kind === 'demo' ? 'camera' : 'demo');
+      actions.toggleSource();
+      break;
+    case 'g':
+    case 'G':
+      actions.toggleGhost();
+      break;
+    case 'r':
+    case 'R':
+      actions.again();
       break;
     case '[':
       song.beatOffset = Math.round((song.beatOffset - 0.05) * 100) / 100;

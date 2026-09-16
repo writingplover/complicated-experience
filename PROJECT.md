@@ -3,17 +3,19 @@
 Living document. Read it before every action. Update it when you decide something or finish a
 milestone. Keep entries to one line each so parallel edits merge cleanly.
 
-Last updated: 2026-09-16 (approved design, build started)
+Last updated: 2026-09-16 (UI redesign: meter, PiP, compact deck; real crowd clips)
 
 ## Status
 
 - Design approved 2026-09-16. **All five build slots are implemented** and verified in demo mode:
   idle → calibrate → countdown → perform (energy, crowd blend, lights, ghost line) → final PNG.
-- Not yet verified with a real camera: MediaPipe load time, GPU delegate, calibration by raising
-  hands, auto dominant-hand guess. First thing to test on the demo laptop.
+- Still to check on the demo laptop: GPU vs CPU delegate in the debug panel, calibration by
+  raising hands, the auto dominant-hand guess, and the 5 s loop seam of the crowd clips.
 - Repo: Vite + TypeScript. Dependencies: `vite`, `typescript`, `@mediapipe/tasks-vision` 1.0.1.
-- Crowd clips in `public/crowd/` are **ffmpeg placeholders**. Replace them with the AI-generated
-  loops (prompts below) using the same filenames.
+- Crowd clips in `public/crowd/` are the generated loops (5 s each), transcoded from the 1080p
+  originals to 720p H.264 (0.5–1.7 MB each). Originals stay outside the repo.
+- Camera path verified on the demo laptop: MediaPipe loads and tracks. The player is now a small
+  portrait panel bottom right so the crowd video is the focus.
 - The song must be dropped at `public/local/complicated.mp3` on each machine. The folder is
   gitignored and audio files are ignored repo-wide. The repo is public.
 - Not production-grade: no tests, no bundle budget, no browser matrix beyond current Chrome.
@@ -46,8 +48,9 @@ frame. The player should always look like the star; the crowd is emotional rewar
 | 5 | `final` | Frozen hero pose, score, peak level, title, Download PNG, Perform again | Space → `idle` |
 
 Keys: Space advances, Escape ends a performance, D toggles the debug panel, H swaps the dominant
-hand, M toggles demo mode (synthetic performer, for testing without a camera). `?demo` in the URL
-starts in demo mode.
+hand, G toggles the ghost line, R performs again, M toggles demo mode (synthetic performer, for
+testing without a camera). `?demo` in the URL starts in demo mode. The deck's transport buttons
+trigger the same actions.
 
 ## Architecture
 
@@ -57,11 +60,11 @@ Single full-screen page. Static layers in `index.html`, one TypeScript module pe
 | Layer (back → front) | Module | Responsibility |
 | --- | --- | --- |
 | Crowd videos | `crowd.ts` | Three `<video>` loops, opacity blend per level, lights, shake, flashes |
-| Camera feed | `pose.ts` + CSS | `getUserMedia` lives in the pose source; the `<video>` is mirrored, dimmed and desaturated in CSS |
-| Figure canvas | `draw.ts` | Stick figure with a guitar from landmarks, mirrored |
+| Player panel (PiP) | `pose.ts` + `draw.ts` + CSS | Portrait rounded panel bottom right: mirrored dimmed camera feed with the stick figure and guitar drawn over it |
 | Ghost line | `ghost.ts` | Move library, picking, drawing on the same canvas |
-| HUD + prompts | `hud.ts` | Energy pill, meter, level, callouts, state prompts, countdown |
-| Final overlay | `final.ts` | Freeze, compose 1920×1080 PNG, download, restart |
+| Excitement meter + prompts | `prompts.ts` | Vertical pink meter (no labels), centre prompts, countdown, callouts, key hint |
+| Deck | `winamp.ts` | Compact Winamp-flavoured bar top right: LCD clock, spectrum, title marquee, progress, transport |
+| Final overlay | `final.ts` | Re-render the last pose at 1920×1080, compose PNG, download, perform again |
 | Debug panel | `debug.ts` | FPS, delegate, signals, energy, level, file status |
 | (no layer) | `pose.ts` | MediaPipe Pose Landmarker wrapper, emits landmarks per frame |
 | (no layer) | `demo.ts` | Synthetic landmark source with the same interface as `pose.ts` |
@@ -69,6 +72,20 @@ Single full-screen page. Static layers in `index.html`, one TypeScript module pe
 | (no layer) | `energy.ts` | Signals → energy → level, pure logic |
 | (no layer) | `song.ts` | Web Audio playback of the local MP3, beat grid, YouTube fallback |
 | (no layer) | `state.ts` | The five states and transitions |
+
+## Interface (2026-09-16 redesign)
+
+The crowd video is the stage. Everything else stays out of its way.
+
+- **Excitement meter**: a tall rounded pink bar along the left edge, filled from the bottom by
+  energy 0–100. No labels, no numbers; the height is the message. Glows harder at Legendary.
+- **Player panel**: a small portrait rounded panel bottom right with the mirrored, dimmed camera
+  feed and the stick-figure guitarist drawn over it. Small on purpose: the focus is the crowd.
+- **Deck**: one compact Winamp-flavoured bar top right, hot pink (`#ff0099`, 2 px black borders,
+  Silkscreen pixel font): LCD clock, 19-bar spectrum fed by the five signals, title marquee, song
+  progress, transport (reset, start, end, skip, camera/demo), ghost toggle, perform again. Only the
+  Winamp elements the stage needs; no EQ, no playlist, no fake stats.
+- Prompts, countdown and callouts stay centred over the crowd. The debug panel docks under the deck.
 
 ## Pose sensor
 
@@ -115,7 +132,8 @@ dark gradient so the stage still works.
 ### Files
 
 `public/crowd/crowd-1-bored.mp4`, `crowd-2-mid.mp4`, `crowd-3-excited.mp4`. H.264 MP4, 1280×720,
-10–15 s seamless loop, under 15 MB each. Current files are ffmpeg placeholders.
+5 s loops, 0.5–1.7 MB each, transcoded from the generated 1080p originals with
+`ffmpeg -vf scale=1280:-2 -an -c:v libx264 -crf 24 -pix_fmt yuv420p -movflags +faststart`.
 
 ### Generation prompts (Veo, Runway, Sora or similar)
 
@@ -196,11 +214,15 @@ Model and WASM load from third-party CDNs at runtime. No error tracking, no anal
 | 2026-09-16 | Solo build with Claude Code, in sequence: sensor and energy, crowd video, stage flow, ghost line, final pose | Team availability; parallel-work rules stay for later contributors |
 | 2026-09-16 | Timing signal is phase-free (interval regularity against the beat period) | Works without knowing the first-beat offset and without the song file |
 | 2026-09-16 | Demo mode with a synthetic performer ships in the app | Testing without a camera, and a safety net for the live demo |
+| 2026-09-16 | Player rendered small in a portrait panel bottom right | Full-size figure hid the crowd; the crowd video is the focus |
+| 2026-09-16 | Excitement shown as a vertical pink meter on the left, no labels | The mock: a visual indicator, not a dashboard |
+| 2026-09-16 | Winamp influence limited to a compact hot pink deck (clock, spectrum, title, progress, transport) | User asked for the necessary elements only, not a one-to-one copy |
+| 2026-09-16 | Crowd clips committed as 720p transcodes of the generated originals | Keeps the repo under a few MB while the clips sit dimmed behind everything |
 
 ## Open questions
 
 - First-beat offset of the MP3 (set with `[` `]` in the debug panel, then hardcode it).
-- Replace the placeholder crowd clips with the generated ones.
+- The 5 s crowd loops may show a seam; longer or cross-faded loops if it bothers anyone.
 - Which laptop and monitor for the demo; test camera framing at 2–3 m there.
 
 ## Cut for now

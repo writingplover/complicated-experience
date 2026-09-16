@@ -26,6 +26,8 @@ const FADE_MS = 600;
  * player's own shoulders and hips. It inspires; it never corrects or scores.
  */
 export class GhostLine {
+  /** Toggled from the deck (G). When off, nothing is drawn and nothing is scheduled. */
+  enabled = true;
   private active: { move: Move; startMs: number; from: Point[][] } | null = null;
   private nextAt = 0;
   private lastName = '';
@@ -39,6 +41,10 @@ export class GhostLine {
   }
 
   update(lm: Landmarks, level: Level, t: number, strumHand: Hand): void {
+    if (!this.enabled) {
+      this.active = null;
+      return;
+    }
     const anchors = anchorsFrom(lm);
     if (!this.active) {
       if (t < this.nextAt) return;

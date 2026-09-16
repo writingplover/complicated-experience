@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="dark" />
     <title>Air Stage</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap" rel="stylesheet" />
   </head>
   <body>
     <main id="stage" class="stage" data-state="idle" data-level="watching">
@@ -15,26 +18,42 @@
         <div class="crowd-fallback"></div>
         <div class="lights"></div>
       </div>
-
-      <video id="camera" class="camera" muted playsinline></video>
-      <canvas id="figure" class="figure"></canvas>
       <div id="flash" class="flash"></div>
 
-      <div id="hud" class="hud">
-        <div class="hud-pill">
-          <span class="hud-energy">ENERGY 0</span>
-          <span class="hud-sep">·</span>
-          <span class="hud-level">WATCHING</span>
-        </div>
-        <div class="hud-meter"><div class="hud-meter-fill"></div></div>
-        <div class="hud-levels">
-          <span data-level="watching">Watching</span>
-          <span data-level="nodding">Nodding</span>
-          <span data-level="moving">Moving</span>
-          <span data-level="roaring">Roaring</span>
-          <span data-level="legendary">Legendary</span>
-        </div>
+      <div id="meter" class="meter" aria-hidden="true"><div class="meter-fill" id="meter-fill"></div></div>
+
+      <!-- Compact Winamp-flavoured deck: time, spectrum, title, progress, transport. -->
+      <div class="dock">
+        <section id="winamp" class="wa wa-win">
+          <header class="wa-title"><span class="wa-title-text">AIR STAGE</span><span class="wa-title-btns"><i></i><i></i></span></header>
+          <div class="wa-body">
+            <div class="wa-display">
+              <div class="wa-clock"><span class="wa-playstate" id="wa-playstate">■</span><span class="wa-time" id="wa-time">00:00</span></div>
+              <canvas class="wa-spectrum" id="wa-spectrum" width="76" height="16"></canvas>
+              <div class="wa-marquee"><span id="wa-marquee">Air Stage · press play</span></div>
+            </div>
+            <div class="wa-seek"><div class="wa-seek-fill" id="wa-seek-fill"></div></div>
+            <div class="wa-transport">
+              <button data-action="reset" title="Reset (Esc twice)" type="button">⏮</button>
+              <button data-action="start" title="Start (Space)" type="button">▶</button>
+              <button data-action="end" title="End performance (Esc)" type="button">⏹</button>
+              <button data-action="skip" title="Skip calibration" type="button">⏭</button>
+              <button data-action="source" title="Camera / demo (M)" type="button">⏏</button>
+              <span class="wa-lamp" id="wa-lamp-cam">cam</span>
+              <span class="wa-lamp" id="wa-lamp-demo">demo</span>
+              <button class="wa-toggle is-on" data-action="ghost" id="wa-btn-ghost" title="Ghost line (G)" type="button">ghost</button>
+              <button class="wa-toggle" data-action="again" title="Perform again (R)" type="button">↻</button>
+            </div>
+          </div>
+        </section>
+        <aside id="debug" class="debug" hidden></aside>
       </div>
+
+      <!-- The player, small, bottom right -->
+      <section class="pip" id="pip">
+        <video id="camera" class="camera" muted playsinline></video>
+        <canvas id="figure" class="figure"></canvas>
+      </section>
 
       <div id="prompt" class="prompt">
         <div class="prompt-ring" hidden></div>
@@ -44,10 +63,10 @@
       <div id="countdown" class="countdown" hidden></div>
       <div id="callout" class="callout"></div>
 
-      <p class="privacy">Camera frames stay in this browser. Nothing is recorded or uploaded.</p>
-      <p id="hint" class="hint"></p>
-
-      <aside id="debug" class="debug" hidden></aside>
+      <div class="notes">
+        <p class="privacy">Camera frames stay in this browser. Nothing is recorded or uploaded.</p>
+        <p id="hint" class="hint"></p>
+      </div>
 
       <section id="final" class="final" hidden>
         <div class="final-inner">

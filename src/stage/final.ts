@@ -1,14 +1,22 @@
-import type { Level } from './types';
+import { FigureRenderer } from './draw';
+import type { Hand, Landmarks, Level } from './types';
 
 export interface FinalData {
-  figure: HTMLCanvasElement;
+  /** Last landmarks seen during the performance; null draws an empty stage. */
+  landmarks: Landmarks | null;
+  hand: Hand;
+  level: Level;
+  sourceAspect: number;
   score: number;
   peakLevel: Level;
   /** Seconds into the performance when the peak level was reached. */
   peakAtSec: number;
 }
 
-/** Freeze-frame overlay: composes a 1920×1080 PNG of the hero pose and offers a download. */
+const W = 1920;
+const H = 1080;
+
+/** Freeze-frame overlay: re-renders the hero pose at 1920×1080 and offers a PNG download. */
 export class FinalOverlay {
   private readonly canvas: HTMLCanvasElement;
   private readonly download: HTMLButtonElement;
@@ -44,39 +52,40 @@ export class FinalOverlay {
   }
 
   private compose(data: FinalData, title: string): void {
-    const W = 1920;
-    const H = 1080;
     this.canvas.width = W;
     this.canvas.height = H;
     const ctx = this.canvas.getContext('2d');
     if (!ctx) return;
 
     const bg = ctx.createLinearGradient(0, 0, 0, H);
-    bg.addColorStop(0, '#12101c');
+    bg.addColorStop(0, '#1c0a14');
     bg.addColorStop(1, '#0b0b0d');
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, W, H);
     const glow = ctx.createRadialGradient(W / 2, H * 0.55, 50, W / 2, H * 0.55, H * 0.7);
-    glow.addColorStop(0, 'rgba(255, 45, 149, 0.35)');
-    glow.addColorStop(1, 'rgba(255, 45, 149, 0)');
+    glow.addColorStop(0, 'rgba(255, 0, 153, 0.35)');
+    glow.addColorStop(1, 'rgba(255, 0, 153, 0)');
     ctx.fillStyle = glow;
     ctx.fillRect(0, 0, W, H);
 
-    // The frozen figure, scaled to fit the frame while keeping its aspect ratio.
-    const scale = Math.min(W / data.figure.width, H / data.figure.height);
-    const fw = data.figure.width * scale;
-    const fh = data.figure.height * scale;
-    ctx.drawImage(data.figure, (W - fw) / 2, (H - fh) / 2, fw, fh);
+    // The hero pose, drawn fresh at full resolution instead of upscaling the small PiP canvas.
+    if (data.landmarks) {
+      const figure = document.createElement('canvas');
+      const renderer = new FigureRenderer(figure, { width: W, height: H });
+      renderer.setSourceAspect(data.sourceAspect);
+      renderer.drawFigure(data.landmarks, data.hand, data.level);
+      ctx.drawImage(figure, 0, 0);
+    }
 
     ctx.textBaseline = 'top';
-    ctx.fillStyle = '#c8ff00';
-    ctx.font = '600 28px system-ui, sans-serif';
+    ctx.fillStyle = '#ff66c4';
+    ctx.font = '700 26px Silkscreen, ui-monospace, monospace';
     ctx.fillText('AIR STAGE  ·  COMPLICATED', 80, 70);
     ctx.fillStyle = '#f4f1ea';
     ctx.font = '900 96px "Arial Black", Impact, sans-serif';
     ctx.fillText(title.toUpperCase(), 80, 110);
-    ctx.font = '600 40px system-ui, sans-serif';
-    ctx.fillStyle = '#ff2d95';
+    ctx.font = '700 40px Silkscreen, ui-monospace, monospace';
+    ctx.fillStyle = '#ff0099';
     ctx.fillText(`SCORE ${data.score}`, 80, H - 150);
     ctx.fillStyle = 'rgba(244, 241, 234, 0.6)';
     ctx.font = '400 26px system-ui, sans-serif';
