@@ -1,7 +1,7 @@
 # Complicated
 
 An interactive web experience around Avril Lavigne's "Complicated", built by a team in 90 minutes.
-Read [CLAUDE.md](CLAUDE.md) first: it holds the rules for working in parallel.
+Read [PROJECT.md](PROJECT.md) for the concept and current status, then [CLAUDE.md](CLAUDE.md) for the rules of working in parallel.
 
 ## Quickstart
 
