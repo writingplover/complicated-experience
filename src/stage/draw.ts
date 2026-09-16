@@ -4,7 +4,20 @@ import type { Hand, Landmarks, Level, Point } from './types';
 const INK = '#ffd6ee';
 const OUTLINE = '#000000';
 const GUITAR = '#ff0099';
-const GLOW = '#ff0099';
+/** Ghost line colours: bright while animating, dim while fading. Alpha is not used in pixel mode. */
+export const GHOST_BRIGHT = '#9ccc00';
+export const GHOST_DIM = '#557300';
+const GUIDE = '#5a1a40';
+
+/** Every rendered pixel snaps to one of these, so the figure reads as hand-placed pixel art. */
+const PALETTE: [number, number, number][] = [
+  [0x00, 0x00, 0x00],
+  [0xff, 0xd6, 0xee],
+  [0xff, 0x00, 0x99],
+  [0x9c, 0xcc, 0x00],
+  [0x55, 0x73, 0x00],
+  [0x5a, 0x1a, 0x40],
+];
 
 export interface StrokeOptions {
   color?: string;
@@ -17,23 +30,32 @@ export interface StrokeOptions {
  * Draws the player as a stick figure with a guitar on a full-stage canvas, mirrored so the
  * player sees themselves as in a mirror. Landmarks map with the same "cover" fit as the camera.
  */
-export interface FixedSize {
-  width: number;
-  height: number;
+export interface RendererOptions {
+  /** Offscreen canvas size when the canvas is not laid out by CSS (the final frame). */
+  fixed?: { width: number; height: number };
+  /** CSS pixels per canvas pixel. 1 = sharp; 4 = chunky pixel art. Ignored with `fixed`. */
+  pixelSize?: number;
 }
 
+/**
+ * Winamp-era pixel art: the canvas is a few times smaller than it is displayed, CSS upscales it
+ * with `image-rendering: pixelated`, and `present()` snaps every pixel to the palette.
+ */
 export class FigureRenderer {
   private readonly ctx: CanvasRenderingContext2D;
+  private readonly fixed: RendererOptions['fixed'];
+  private readonly pixelSize: number;
   private sourceAspect = 16 / 9;
 
-  /** Pass `fixed` for an offscreen canvas that is not laid out by CSS (the final frame). */
   constructor(
     private readonly canvas: HTMLCanvasElement,
-    private readonly fixed?: FixedSize,
+    options: RendererOptions = {},
   ) {
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) throw new Error('2d canvas not available');
     this.ctx = ctx;
+    this.fixed = options.fixed;
+    this.pixelSize = Math.max(1, options.pixelSize ?? 1);
     this.resize();
   }
 
@@ -48,9 +70,38 @@ export class FigureRenderer {
       return;
     }
     const rect = this.canvas.getBoundingClientRect();
-    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-    this.canvas.width = Math.max(1, Math.round(rect.width * dpr));
-    this.canvas.height = Math.max(1, Math.round(rect.height * dpr));
+    this.canvas.width = Math.max(1, Math.round(rect.width / this.pixelSize));
+    this.canvas.height = Math.max(1, Math.round(rect.height / this.pixelSize));
+  }
+
+  /** Snap every drawn pixel to the palette and to full opacity. Call once per frame after drawing. */
+  present(): void {
+    const { ctx } = this;
+    const W = this.canvas.width;
+    const H = this.canvas.height;
+    const image = ctx.getImageData(0, 0, W, H);
+    const d = image.data;
+    for (let i = 0; i < d.length; i += 4) {
+      if (d[i + 3] < 110) {
+        d[i + 3] = 0;
+        continue;
+      }
+      let best = 0;
+      let bestDist = Infinity;
+      for (let c = 0; c < PALETTE.length; c++) {
+        const [r, g, b] = PALETTE[c];
+        const dist = (d[i] - r) ** 2 + (d[i + 1] - g) ** 2 + (d[i + 2] - b) ** 2;
+        if (dist < bestDist) {
+          bestDist = dist;
+          best = c;
+        }
+      }
+      d[i] = PALETTE[best][0];
+      d[i + 1] = PALETTE[best][1];
+      d[i + 2] = PALETTE[best][2];
+      d[i + 3] = 255;
+    }
+    ctx.putImageData(image, 0, 0);
   }
 
   clear(): void {
@@ -73,16 +124,16 @@ export class FigureRenderer {
     const W = this.canvas.width;
     const H = this.canvas.height;
     ctx.save();
-    ctx.setLineDash([12, 14]);
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = 'rgba(244, 241, 234, 0.35)';
+    ctx.setLineDash([3, 3]);
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = GUIDE;
     ctx.beginPath();
-    ctx.ellipse(W / 2, H * 0.55, W * 0.12, H * 0.42, 0, 0, Math.PI * 2);
+    ctx.ellipse(W / 2, H * 0.55, W * 0.18, H * 0.42, 0, 0, Math.PI * 2);
     ctx.stroke();
     ctx.restore();
   }
 
-  drawFigure(lm: Landmarks, dominant: Hand, level: Level): void {
+  drawFigure(lm: Landmarks, dominant: Hand, _level: Level): void {
     const { ctx } = this;
     const P = (i: number): Point => this.toPoint(lm[i]);
     const ls = P(LM.leftShoulder);
@@ -90,9 +141,9 @@ export class FigureRenderer {
     const lh = P(LM.leftHip);
     const rh = P(LM.rightHip);
     const nose = P(LM.nose);
-    const sw = Math.max(24, dist(ls, rs));
+    const sw = Math.max(10, dist(ls, rs));
     const limb = sw * 0.22;
-    const edge = Math.max(2, sw * 0.07);
+    const edge = Math.max(1, sw * 0.07);
     const head = { x: nose.x, y: nose.y - sw * 0.05 };
     const headR = sw * 0.3;
     const limbs = [
@@ -118,19 +169,6 @@ export class FigureRenderer {
     ctx.save();
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-
-    // Pass 1: glow behind everything at the top two levels.
-    if (level === 'legendary' || level === 'roaring') {
-      ctx.save();
-      ctx.shadowColor = GLOW;
-      ctx.shadowBlur = level === 'legendary' ? sw * 0.7 : sw * 0.35;
-      ctx.strokeStyle = GLOW;
-      ctx.lineWidth = limb;
-      for (const line of limbs) this.polyline(line);
-      ctx.fillStyle = GLOW;
-      this.polygon(torso, true, false);
-      ctx.restore();
-    }
 
     // Pass 2: black outlines, drawn fat so they peek out around the pink fills.
     ctx.strokeStyle = OUTLINE;

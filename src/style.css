@@ -507,6 +507,15 @@ button {
 
 .figure {
   pointer-events: none;
+  image-rendering: pixelated;
+}
+
+.stage[data-state='perform'][data-level='roaring'] .figure {
+  filter: drop-shadow(0 0 6px var(--wa-pink));
+}
+
+.stage[data-state='perform'][data-level='legendary'] .figure {
+  filter: drop-shadow(0 0 8px var(--wa-pink)) drop-shadow(0 0 20px var(--wa-pink));
 }
 
 @media (min-width: 1500px) and (min-height: 900px) {

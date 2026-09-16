@@ -21,6 +21,8 @@ import type { DeckActions, PlayMode } from './stage/winamp';
 const BPM = 78;
 const SONG_URL = '/local/complicated.mp3';
 const TRACK_TITLE = 'Avril Lavigne - Complicated (4:13)';
+/** CSS pixels per canvas pixel for the figure. Bigger = chunkier pixel art. */
+const PIXEL_SIZE = 4;
 const SONG_HINT = 'Drop the MP3 at public/local/complicated.mp3 for sound. Without it a run lasts 60 seconds.';
 
 function $<T extends HTMLElement = HTMLElement>(selector: string): T {
@@ -33,7 +35,7 @@ const stage = $('#stage');
 const cameraEl = $<HTMLVideoElement>('#camera');
 const reducedMotion = prefersReducedMotion();
 
-const renderer = new FigureRenderer($<HTMLCanvasElement>('#figure'));
+const renderer = new FigureRenderer($<HTMLCanvasElement>('#figure'), { pixelSize: PIXEL_SIZE });
 const prompts = new Prompts({
   prompt: $('#prompt'),
   countdown: $('#countdown'),
@@ -198,6 +200,7 @@ function onFrame(frame: PoseFrame): void {
         break;
       }
     }
+    renderer.present();
   }
 
   deck.setSignals(machine.state === 'perform' ? (lastEnergy?.signals ?? null) : null, lastEnergy?.energy ?? 0);

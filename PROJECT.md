@@ -3,7 +3,7 @@
 Living document. Read it before every action. Update it when you decide something or finish a
 milestone. Keep entries to one line each so parallel edits merge cleanly.
 
-Last updated: 2026-09-16 (debug panel removed)
+Last updated: 2026-09-16 (pixel-art figure)
 
 ## Status
 
@@ -80,8 +80,11 @@ The crowd video is the stage. Everything else stays out of its way.
   track, segmented hot pink LED fill, a slider handle riding on top, filled by energy 0–100. No
   labels, no numbers; the height is the message. Glows harder at Legendary.
 - **Player panel**: the Winamp "video window" bottom right, portrait: title bar, bevels, faint
-  scanlines, the camera feed tinted pink and dimmed, the guitarist drawn over it in pale pink with
-  black outlines and a hot pink guitar. Small on purpose: the focus is the crowd.
+  scanlines, the camera feed tinted pink and dimmed, the guitarist drawn over it as **pixel art**:
+  the figure canvas is rendered at a quarter of its display size (4 CSS px per pixel), every pixel
+  snaps to the six-colour skin palette with no anti-aliasing, and CSS upscales it with hard edges.
+  Pale pink body, black outlines, hot pink guitar; the Roaring and Legendary glow is a CSS drop
+  shadow so the pixels stay crisp. Small on purpose: the focus is the crowd.
 - **Deck**: one compact Winamp-flavoured bar top right, hot pink (`#ff0099`, 2 px black borders,
   Silkscreen pixel font): LCD clock, 19-bar spectrum fed by the five signals, title marquee, song
   progress, transport (reset, start, end, skip, camera/demo), ghost toggle, perform again. Only the
@@ -243,6 +246,7 @@ Model and WASM load from third-party CDNs at runtime. No error tracking, no anal
 | 2026-09-16 | Legendary floor and hold ease with song progress: 97 / 3 s at the start → 82 / 0.8 s at the end | Start really hard, get progressively easier, so the climax lands late in the song |
 | 2026-09-16 | Legendary hard-locked for the first 30 s of the song | It was reachable early with the streak bonus; the opening must never peak |
 | 2026-09-16 | Debug panel removed | Not needed on stage; the deck and the meter show what matters |
+| 2026-09-16 | Figure rendered as palette-snapped pixel art at 4 CSS px per pixel | "More pixelated, Winamp style"; a true low-res render beats a blur filter |
 | 2026-09-16 | Share frame is the real camera image at the freeze moment, figure faintly overlaid | A photo is the thing people actually want to keep; still local-only, nothing uploaded |
 | 2026-09-16 | Crowd clips hard-cut instead of crossfading | Cuts feel like a live broadcast; blends looked muddy |
 | 2026-09-16 | Fourth clip "hyped" for Roaring; the excited clip appears only at Legendary | The hardest level deserves footage nobody has seen yet in the run |

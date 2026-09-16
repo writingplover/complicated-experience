@@ -1,5 +1,6 @@
 import { LM, clamp01, dist, elbowOf, lerpPoint, levelIndex, otherHand, shoulderOf, wristOf } from './types';
 import type { Hand, Landmarks, Level, Point } from './types';
+import { GHOST_BRIGHT, GHOST_DIM } from './draw';
 import type { FigureRenderer } from './draw';
 
 interface Anchors {
@@ -69,11 +70,12 @@ export class GhostLine {
     const progress = clamp01(age / ANIMATE_MS);
     const fade = age < ANIMATE_MS + HOLD_MS ? 1 : 1 - (age - ANIMATE_MS - HOLD_MS) / FADE_MS;
     const target = this.active.move.lines(anchors, strumHand);
-    const width = Math.max(2, anchors.sw * this.renderer.pixelsPerUnit() * 0.08);
+    const width = Math.max(1, anchors.sw * this.renderer.pixelsPerUnit() * 0.08);
+    const color = fade > 0.5 ? GHOST_BRIGHT : GHOST_DIM;
     target.forEach((line, i) => {
       const from = this.active?.from[i];
       const points = from && from.length === line.length ? line.map((p, j) => lerpPoint(from[j], p, progress)) : line;
-      this.renderer.drawNormalised(points, { alpha: 0.35 * fade, dashed: true, width, color: '#c8ff00' });
+      this.renderer.drawNormalised(points, { dashed: true, width, color });
     });
   }
 }

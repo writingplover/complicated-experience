@@ -17,6 +17,8 @@ export interface FinalData {
 
 const W = 1920;
 const H = 1080;
+/** The figure is drawn at 1/6 resolution and upscaled with hard edges, like on stage. */
+const FINAL_PIXEL = 6;
 
 /** Freeze-frame overlay: re-renders the hero pose at 1920×1080 and offers a PNG download. */
 export class FinalOverlay {
@@ -93,12 +95,15 @@ export class FinalOverlay {
     // The tracked pose over the photo, faint; full strength when there is no photo (demo mode).
     if (data.landmarks) {
       const figure = document.createElement('canvas');
-      const renderer = new FigureRenderer(figure, { width: W, height: H });
+      const renderer = new FigureRenderer(figure, { fixed: { width: W / FINAL_PIXEL, height: H / FINAL_PIXEL } });
       renderer.setSourceAspect(data.sourceAspect);
       renderer.drawFigure(data.landmarks, data.hand, data.level);
+      renderer.present();
       ctx.save();
-      ctx.globalAlpha = data.cameraFrame ? 0.28 : 1;
-      ctx.drawImage(figure, 0, 0);
+      ctx.imageSmoothingEnabled = false;
+      ctx.globalAlpha = data.cameraFrame ? 0.3 : 1;
+      if (data.level === 'legendary' || data.level === 'roaring') ctx.filter = 'drop-shadow(0 0 18px #ff0099)';
+      ctx.drawImage(figure, 0, 0, W, H);
       ctx.restore();
     }
 
