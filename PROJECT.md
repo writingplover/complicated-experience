@@ -3,7 +3,7 @@
 Living document. Read it before every action. Update it when you decide something or finish a
 milestone. Keep entries to one line each so parallel edits merge cleanly.
 
-Last updated: 2026-09-16 (opening still with zoom into the crowd)
+Last updated: 2026-09-16 (Legendary locked for the first 30 s)
 
 ## Status
 
@@ -114,10 +114,11 @@ The crowd video is the stage. Everything else stays out of its way.
   a weighted sum of 0.8 gives 76, not 80. Smoothed energy rises with factor 0.25 per frame and
   falls with 0.03 per frame (fast rise, slow fall). No person → signals decay to zero.
 - Levels: Watching < 22, Nodding 22–45, Moving 45–68, Roaring 68–L, Legendary ≥ L.
-- **Legendary is adaptive.** L starts at 97 with a 3 s hold and eases (smoothstep on song
-  progress) to 82 with a 0.8 s hold by the end of the song. Early Legendary is nearly impossible,
-  the last chorus is where it happens. Dropping a level requires energy 5 below the floor for 1 s
-  (hysteresis). Rising to the other levels is immediate. The debug panel shows the live floor.
+- **Legendary is adaptive and locked early.** For the first 30 s of the song Legendary cannot be
+  reached at all, whatever the energy. After the lock, L starts at 97 with a 3 s hold and eases
+  (smoothstep over the rest of the song) to 82 with a 0.8 s hold by the end. The last chorus is
+  where it happens. Dropping a level requires energy 5 below the floor for 1 s (hysteresis). Rising
+  to the other levels is immediate. The debug panel shows the live floor or the lock.
 - Beat streak: 4 consecutive on-beat peaks trigger a callout and a small energy bonus.
 - Target visible latency under 150 ms: no extra buffering between landmarks and the crowd.
 
@@ -240,6 +241,7 @@ Model and WASM load from third-party CDNs at runtime. No error tracking, no anal
 | 2026-09-16 | Legendary is harder: energy curve ^1.25, floors 22/45/68/90, Legendary needs 1.5 s above 90 | Top level came too easily; it should feel earned |
 | 2026-09-16 | All typography in the Silkscreen pixel font | One skin for every visible element, as requested |
 | 2026-09-16 | Legendary floor and hold ease with song progress: 97 / 3 s at the start → 82 / 0.8 s at the end | Start really hard, get progressively easier, so the climax lands late in the song |
+| 2026-09-16 | Legendary hard-locked for the first 30 s of the song | It was reachable early with the streak bonus; the opening must never peak |
 | 2026-09-16 | Share frame is the real camera image at the freeze moment, figure faintly overlaid | A photo is the thing people actually want to keep; still local-only, nothing uploaded |
 | 2026-09-16 | Crowd clips hard-cut instead of crossfading | Cuts feel like a live broadcast; blends looked muddy |
 | 2026-09-16 | Fourth clip "hyped" for Roaring; the excited clip appears only at Legendary | The hardest level deserves footage nobody has seen yet in the run |

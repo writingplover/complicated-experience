@@ -30,9 +30,11 @@ const AUTO_HAND_MS = 5000;
 /** Raw energy is pushed through this curve; > 1 makes the top of the meter harder to reach. */
 const ENERGY_GAMMA = 1.25;
 /**
- * Legendary is adaptive: brutal at the start of the song, reachable by the last chorus.
- * The floor and the hold time ease from START to END with song progress 0..1.
+ * Legendary is adaptive: locked for the first 30 s, brutal right after, reachable by the last
+ * chorus. After the lock, the floor and the hold time ease from START to END over the rest of
+ * the song.
  */
+const LEGENDARY_LOCK_SEC = 30;
 const LEGENDARY_FLOOR_START = 97;
 const LEGENDARY_FLOOR_END = 82;
 const LEGENDARY_HOLD_START_MS = 3000;
@@ -64,7 +66,8 @@ export class EnergyEngine {
   private energyCount = 0;
   private levelSince: number | null = null;
   private legendarySince: number | null = null;
-  private progress = 0;
+  private elapsedSec = 0;
+  private durationSec = 60;
   private peakLevel: Level = 'watching';
   private peakAt = 0;
 
@@ -80,18 +83,31 @@ export class EnergyEngine {
     return this.autoDominant;
   }
 
-  /** Song progress 0..1. Drives how hard Legendary is right now. */
-  setProgress(progress: number): void {
-    this.progress = clamp01(progress);
+  /** Seconds into the performance and its total length. Drives how hard Legendary is right now. */
+  setTime(elapsedSec: number, durationSec: number): void {
+    this.elapsedSec = Math.max(0, elapsedSec);
+    this.durationSec = Math.max(1, durationSec);
+  }
+
+  /** True during the opening lock: no amount of energy reaches Legendary. */
+  get legendaryLocked(): boolean {
+    return this.elapsedSec < LEGENDARY_LOCK_SEC;
+  }
+
+  /** 0..1 progress through the unlocked part of the song, smoothstepped. */
+  private get legendaryEase(): number {
+    const span = Math.max(1, this.durationSec - LEGENDARY_LOCK_SEC);
+    const p = clamp01((this.elapsedSec - LEGENDARY_LOCK_SEC) / span);
+    return p * p * (3 - 2 * p);
   }
 
   get legendaryFloor(): number {
-    const eased = this.progress * this.progress * (3 - 2 * this.progress);
-    return LEGENDARY_FLOOR_START + (LEGENDARY_FLOOR_END - LEGENDARY_FLOOR_START) * eased;
+    if (this.legendaryLocked) return Number.POSITIVE_INFINITY;
+    return LEGENDARY_FLOOR_START + (LEGENDARY_FLOOR_END - LEGENDARY_FLOOR_START) * this.legendaryEase;
   }
 
   get legendaryHoldMs(): number {
-    return LEGENDARY_HOLD_START_MS + (LEGENDARY_HOLD_END_MS - LEGENDARY_HOLD_START_MS) * this.progress;
+    return LEGENDARY_HOLD_START_MS + (LEGENDARY_HOLD_END_MS - LEGENDARY_HOLD_START_MS) * this.legendaryEase;
   }
 
   private floors(): Record<Level, number> {
@@ -127,7 +143,7 @@ export class EnergyEngine {
     this.energyCount = 0;
     this.levelSince = null;
     this.legendarySince = null;
-    this.progress = 0;
+    this.elapsedSec = 0;
     this.peakLevel = 'watching';
     this.peakAt = 0;
   }

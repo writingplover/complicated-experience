@@ -193,7 +193,7 @@ function onFrame(frame: PoseFrame): void {
         if (present) renderer.drawFigure(lm, energy.hand, 'watching');
         break;
       case 'perform': {
-        energy.setProgress(song.duration > 0 ? song.time() / song.duration : 0);
+        energy.setTime(song.time(), song.duration);
         const state = energy.update(lm, now);
         lastEnergy = state;
         prompts.setMeter(state.energy);
@@ -231,7 +231,7 @@ function onFrame(frame: PoseFrame): void {
       raw: e?.raw ?? 0,
       energy: e?.energy ?? 0,
       level: e?.level ?? 'watching',
-      'legendary floor': `${energy.legendaryFloor.toFixed(0)} for ${(energy.legendaryHoldMs / 1000).toFixed(1)}s`,
+      'legendary floor': energy.legendaryLocked ? 'locked for the first 30 s' : `${energy.legendaryFloor.toFixed(0)} for ${(energy.legendaryHoldMs / 1000).toFixed(1)}s`,
       streak: e?.streak ?? 0,
       song: song.loaded ? `${song.time().toFixed(1)}s / ${song.duration.toFixed(0)}s` : song.missingReason,
       'beat offset': `${song.beatOffset.toFixed(2)}s  ( [ ] )`,
