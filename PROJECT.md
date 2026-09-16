@@ -3,7 +3,7 @@
 Living document. Read it before every action. Update it when you decide something or finish a
 milestone. Keep entries to one line each so parallel edits merge cleanly.
 
-Last updated: 2026-09-16 (Winamp skin on meter, player and typography; harder Legendary)
+Last updated: 2026-09-16 (adaptive Legendary, photo share frame)
 
 ## Status
 
@@ -113,9 +113,11 @@ The crowd video is the stage. Everything else stays out of its way.
 - Raw energy = 100 × (weighted sum)^1.25. The curve makes the top of the meter harder to reach:
   a weighted sum of 0.8 gives 76, not 80. Smoothed energy rises with factor 0.25 per frame and
   falls with 0.03 per frame (fast rise, slow fall). No person → signals decay to zero.
-- Levels: Watching < 22, Nodding 22–45, Moving 45–68, Roaring 68–90, Legendary ≥ 90. Legendary
-  also needs the energy above 90 for 1.5 s before it triggers. Dropping a level requires energy 5
-  below the threshold for 1 s (hysteresis). Rising to the other levels is immediate.
+- Levels: Watching < 22, Nodding 22–45, Moving 45–68, Roaring 68–L, Legendary ≥ L.
+- **Legendary is adaptive.** L starts at 97 with a 3 s hold and eases (smoothstep on song
+  progress) to 82 with a 0.8 s hold by the end of the song. Early Legendary is nearly impossible,
+  the last chorus is where it happens. Dropping a level requires energy 5 below the floor for 1 s
+  (hysteresis). Rising to the other levels is immediate. The debug panel shows the live floor.
 - Beat streak: 4 consecutive on-beat peaks trigger a callout and a small energy bonus.
 - Target visible latency under 150 ms: no extra buffering between landmarks and the crowd.
 
@@ -175,9 +177,12 @@ of whether the player followed it.
 
 ## Final pose
 
-Song end or Escape freezes the last frame. A 1920×1080 canvas composes: dark background, the
-frozen figure, score, peak level, title ("Legendary at 2:41"), the song name. Download button
-saves a PNG. Perform again returns to `idle`.
+Song end or Escape freezes the moment. A 1920×1080 canvas composes: the **real camera image**
+at that instant (mirrored like the stage, cover-fitted, dark bands top and bottom for text), the
+tracked figure faintly over it, score, peak level, title ("Legendary at 3:41"), the song name and a
+line saying the file is saved locally only. In demo mode there is no camera, so the figure is
+drawn at full strength on a dark background. Download saves the PNG; nothing is uploaded.
+Perform again restarts at the countdown with the same calibration.
 
 - Score = mean energy × 10 (0–1000), peak level = highest level held for at least 2 s.
 
@@ -227,6 +232,8 @@ Model and WASM load from third-party CDNs at runtime. No error tracking, no anal
 | 2026-09-16 | Winamp skin applied to the meter (upright slider) and the player panel (video window); figure in pale pink with black outlines | User request; ties the three visible elements into one skin |
 | 2026-09-16 | Legendary is harder: energy curve ^1.25, floors 22/45/68/90, Legendary needs 1.5 s above 90 | Top level came too easily; it should feel earned |
 | 2026-09-16 | All typography in the Silkscreen pixel font | One skin for every visible element, as requested |
+| 2026-09-16 | Legendary floor and hold ease with song progress: 97 / 3 s at the start → 82 / 0.8 s at the end | Start really hard, get progressively easier, so the climax lands late in the song |
+| 2026-09-16 | Share frame is the real camera image at the freeze moment, figure faintly overlaid | A photo is the thing people actually want to keep; still local-only, nothing uploaded |
 
 ## Open questions
 

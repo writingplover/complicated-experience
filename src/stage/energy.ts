@@ -29,8 +29,14 @@ const PEAK_HOLD_MS = 2000;
 const AUTO_HAND_MS = 5000;
 /** Raw energy is pushed through this curve; > 1 makes the top of the meter harder to reach. */
 const ENERGY_GAMMA = 1.25;
-/** Legendary only triggers after the energy has sat above its floor for this long. */
-const LEGENDARY_HOLD_MS = 1500;
+/**
+ * Legendary is adaptive: brutal at the start of the song, reachable by the last chorus.
+ * The floor and the hold time ease from START to END with song progress 0..1.
+ */
+const LEGENDARY_FLOOR_START = 97;
+const LEGENDARY_FLOOR_END = 82;
+const LEGENDARY_HOLD_START_MS = 3000;
+const LEGENDARY_HOLD_END_MS = 800;
 
 /**
  * Five movement signals → energy 0..100 → crowd level. Pure logic, no DOM.
@@ -58,6 +64,7 @@ export class EnergyEngine {
   private energyCount = 0;
   private levelSince: number | null = null;
   private legendarySince: number | null = null;
+  private progress = 0;
   private peakLevel: Level = 'watching';
   private peakAt = 0;
 
@@ -71,6 +78,24 @@ export class EnergyEngine {
 
   get handIsGuessed(): boolean {
     return this.autoDominant;
+  }
+
+  /** Song progress 0..1. Drives how hard Legendary is right now. */
+  setProgress(progress: number): void {
+    this.progress = clamp01(progress);
+  }
+
+  get legendaryFloor(): number {
+    const eased = this.progress * this.progress * (3 - 2 * this.progress);
+    return LEGENDARY_FLOOR_START + (LEGENDARY_FLOOR_END - LEGENDARY_FLOOR_START) * eased;
+  }
+
+  get legendaryHoldMs(): number {
+    return LEGENDARY_HOLD_START_MS + (LEGENDARY_HOLD_END_MS - LEGENDARY_HOLD_START_MS) * this.progress;
+  }
+
+  private floors(): Record<Level, number> {
+    return { ...LEVEL_FLOOR, legendary: this.legendaryFloor };
   }
 
   setCalibration(calibration: Calibration): void {
@@ -102,6 +127,7 @@ export class EnergyEngine {
     this.energyCount = 0;
     this.levelSince = null;
     this.legendarySince = null;
+    this.progress = 0;
     this.peakLevel = 'watching';
     this.peakAt = 0;
   }
@@ -204,10 +230,11 @@ export class EnergyEngine {
   }
 
   private updateLevel(t: number): void {
-    let target = levelFor(this.energy);
+    const floors = this.floors();
+    let target = levelFor(this.energy, floors);
     if (target === 'legendary' && this.level !== 'legendary') {
       this.legendarySince ??= t;
-      if (t - this.legendarySince < LEGENDARY_HOLD_MS) target = 'roaring';
+      if (t - this.legendarySince < this.legendaryHoldMs) target = 'roaring';
     } else if (target !== 'legendary') {
       this.legendarySince = null;
     }
@@ -216,7 +243,7 @@ export class EnergyEngine {
       this.levelSince = t;
       this.dropSince = null;
     } else if (levelIndex(target) < levelIndex(this.level)) {
-      if (this.energy < LEVEL_FLOOR[this.level] - DROP_MARGIN) {
+      if (this.energy < floors[this.level] - DROP_MARGIN) {
         this.dropSince ??= t;
         if (t - this.dropSince >= DROP_HOLD_MS) {
           this.level = target;

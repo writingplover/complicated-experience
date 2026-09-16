@@ -111,6 +111,18 @@ const final = new FinalOverlay($('#final'), () => actions.again());
 // ---------------------------------------------------------------------------------------------
 // Pose source
 
+/** Grab the current camera image at native size. Null when no camera is running (demo mode). */
+function captureCameraFrame(): HTMLCanvasElement | null {
+  if (source?.kind !== 'camera' || cameraEl.videoWidth === 0 || cameraEl.readyState < 2) return null;
+  const canvas = document.createElement('canvas');
+  canvas.width = cameraEl.videoWidth;
+  canvas.height = cameraEl.videoHeight;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+  ctx.drawImage(cameraEl, 0, 0);
+  return canvas;
+}
+
 function sourceAspect(): number {
   if (source?.kind === 'camera' && cameraEl.videoWidth > 0) return cameraEl.videoWidth / cameraEl.videoHeight;
   return 16 / 9;
@@ -182,6 +194,7 @@ function onFrame(frame: PoseFrame): void {
         if (present) renderer.drawFigure(lm, energy.hand, 'watching');
         break;
       case 'perform': {
+        energy.setProgress(song.duration > 0 ? song.time() / song.duration : 0);
         const state = energy.update(lm, now);
         lastEnergy = state;
         prompts.setMeter(state.energy);
@@ -219,6 +232,7 @@ function onFrame(frame: PoseFrame): void {
       raw: e?.raw ?? 0,
       energy: e?.energy ?? 0,
       level: e?.level ?? 'watching',
+      'legendary floor': `${energy.legendaryFloor.toFixed(0)} for ${(energy.legendaryHoldMs / 1000).toFixed(1)}s`,
       streak: e?.streak ?? 0,
       song: song.loaded ? `${song.time().toFixed(1)}s / ${song.duration.toFixed(0)}s` : song.missingReason,
       'beat offset': `${song.beatOffset.toFixed(2)}s  ( [ ] )`,
@@ -296,6 +310,7 @@ function enter(state: StageState): void {
       prompts.setPrompt('');
       const stats = energy.stats();
       final.show({
+        cameraFrame: captureCameraFrame(),
         landmarks: lastLandmarks,
         hand: energy.hand,
         level: lastEnergy?.level ?? 'watching',

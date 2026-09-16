@@ -2,7 +2,9 @@ import { FigureRenderer } from './draw';
 import type { Hand, Landmarks, Level } from './types';
 
 export interface FinalData {
-  /** Last landmarks seen during the performance; null draws an empty stage. */
+  /** The camera image at the freeze moment, unmirrored as captured; null in demo mode. */
+  cameraFrame: HTMLCanvasElement | null;
+  /** Last landmarks seen during the performance; null draws no figure. */
   landmarks: Landmarks | null;
   hand: Hand;
   level: Level;
@@ -68,13 +70,36 @@ export class FinalOverlay {
     ctx.fillStyle = glow;
     ctx.fillRect(0, 0, W, H);
 
-    // The hero pose, drawn fresh at full resolution instead of upscaling the small PiP canvas.
+    // The real photo: mirrored like the stage, cover-fitted, with a dark band for the text.
+    if (data.cameraFrame) {
+      const frame = data.cameraFrame;
+      const scale = Math.max(W / frame.width, H / frame.height);
+      const fw = frame.width * scale;
+      const fh = frame.height * scale;
+      ctx.save();
+      ctx.translate(W, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(frame, (W - fw) / 2, (H - fh) / 2, fw, fh);
+      ctx.restore();
+      const band = ctx.createLinearGradient(0, 0, 0, H);
+      band.addColorStop(0, 'rgba(11, 11, 13, 0.75)');
+      band.addColorStop(0.3, 'rgba(11, 11, 13, 0)');
+      band.addColorStop(0.72, 'rgba(11, 11, 13, 0)');
+      band.addColorStop(1, 'rgba(11, 11, 13, 0.8)');
+      ctx.fillStyle = band;
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    // The tracked pose over the photo, faint; full strength when there is no photo (demo mode).
     if (data.landmarks) {
       const figure = document.createElement('canvas');
       const renderer = new FigureRenderer(figure, { width: W, height: H });
       renderer.setSourceAspect(data.sourceAspect);
       renderer.drawFigure(data.landmarks, data.hand, data.level);
+      ctx.save();
+      ctx.globalAlpha = data.cameraFrame ? 0.28 : 1;
       ctx.drawImage(figure, 0, 0);
+      ctx.restore();
     }
 
     ctx.textBaseline = 'top';
@@ -89,7 +114,7 @@ export class FinalOverlay {
     ctx.fillText(`SCORE ${data.score}`, 80, H - 150);
     ctx.fillStyle = 'rgba(244, 241, 234, 0.6)';
     ctx.font = '400 22px Silkscreen, ui-monospace, monospace';
-    ctx.fillText('PLAYED TO AVRIL LAVIGNE’S COMPLICATED. NOTHING WAS RECORDED.', 80, H - 90);
+    ctx.fillText('PLAYED TO AVRIL LAVIGNE’S COMPLICATED. SAVED ON THIS MACHINE ONLY, NOTHING UPLOADED.', 80, H - 90);
   }
 
   private save(): void {

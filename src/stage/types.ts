@@ -76,9 +76,9 @@ export const shoulderOf = (hand: Hand): number => (hand === 'left' ? LM.leftShou
 export const otherHand = (hand: Hand): Hand => (hand === 'left' ? 'right' : 'left');
 export const levelIndex = (level: Level): number => LEVELS.indexOf(level);
 
-export function levelFor(energy: number): Level {
+export function levelFor(energy: number, floors: Record<Level, number> = LEVEL_FLOOR): Level {
   let level: Level = 'watching';
-  for (const candidate of LEVELS) if (energy >= LEVEL_FLOOR[candidate]) level = candidate;
+  for (const candidate of LEVELS) if (energy >= floors[candidate]) level = candidate;
   return level;
 }
 
