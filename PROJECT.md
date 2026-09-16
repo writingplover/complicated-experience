@@ -3,7 +3,7 @@
 Living document. Read it before every action. Update it when you decide something or finish a
 milestone. Keep entries to one line each so parallel edits merge cleanly.
 
-Last updated: 2026-09-16 (fourth crowd clip; excited reserved for Legendary)
+Last updated: 2026-09-16 (opening still with zoom into the crowd)
 
 ## Status
 
@@ -41,10 +41,10 @@ frame. The player should always look like the star; the crowd is emotional rewar
 
 | # | State | What the player sees | Exit |
 | --- | --- | --- | --- |
-| 1 | `idle` | "Step in": dark stage, bored crowd, an oval silhouette guide | A person is detected for 1 s, or Space |
+| 1 | `idle` | "Step in" over the opening still (on stage, back to us, crowd waiting), an oval silhouette guide in the player panel | A person is detected for 1 s, or Space |
 | 2 | `calibrate` | "Raise both hands" | Both wrists above the head for 1.5 s → auto dominant hand; one wrist alone for 1 s → that hand is dominant |
-| 3 | `countdown` | 3, 2, 1 | Song starts on 0 |
-| 4 | `perform` | Full song. Crowd, meter, ghost line live | Song ends, or Escape |
+| 3 | `countdown` | 3, 2, 1, still over the opening still | Song starts on 0 |
+| 4 | `perform` | The still zooms into the crowd (1.4 s) and the crowd clips start. Full song. Crowd, meter, ghost line live | Song ends, or Escape |
 | 5 | `final` | Frozen hero pose, score, peak level, title, Download PNG, Perform again | Space → `idle` |
 
 Keys: Space advances, Escape ends a performance, D toggles the debug panel, H swaps the dominant
@@ -122,6 +122,11 @@ The crowd video is the stage. Everything else stays out of its way.
 - Target visible latency under 150 ms: no extra buffering between landmarks and the crowd.
 
 ## Crowd
+
+**Opening still**: `public/stage/start.jpg` (1920×1080, generated, our own) covers the stage during
+idle, calibrate and countdown, with the clips paused on their first frame. On perform it zooms
+into the crowd (scale 2.2, 1.4 s) and fades out while the bored clip settles from a slight zoom,
+so the cut reads as one camera move. Reduced motion: hard cut, no zoom.
 
 Four muted, looping, always-playing videos stacked in one box. Level picks exactly one clip
 with a **hard cut**, no crossfade (decided 2026-09-16). The excited clip only appears at Legendary:
@@ -238,6 +243,7 @@ Model and WASM load from third-party CDNs at runtime. No error tracking, no anal
 | 2026-09-16 | Share frame is the real camera image at the freeze moment, figure faintly overlaid | A photo is the thing people actually want to keep; still local-only, nothing uploaded |
 | 2026-09-16 | Crowd clips hard-cut instead of crossfading | Cuts feel like a live broadcast; blends looked muddy |
 | 2026-09-16 | Fourth clip "hyped" for Roaring; the excited clip appears only at Legendary | The hardest level deserves footage nobody has seen yet in the run |
+| 2026-09-16 | Opening still (performer facing the crowd) until the countdown ends, then a zoom into the crowd starts the clips | Gives the run a curtain-up moment; the clips only move once the song does |
 
 ## Open questions
 

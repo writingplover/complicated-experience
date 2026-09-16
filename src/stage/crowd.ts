@@ -21,7 +21,9 @@ const OPACITY: Record<Level, Record<CrowdClip, number>> = {
 export class Crowd {
   readonly status: Record<CrowdClip, ClipStatus> = { bored: 'loading', mid: 'loading', hyped: 'loading', excited: 'loading' };
   private readonly videos = new Map<CrowdClip, HTMLVideoElement>();
+  private readonly startFrame: HTMLElement | null;
   private level: Level = 'watching';
+  private zoomTimer: number | undefined;
   private beatTimer: number | undefined;
   private shakeTimer: number | undefined;
   private flashTimer: number | undefined;
@@ -32,6 +34,7 @@ export class Crowd {
     private readonly flash: HTMLElement,
     private readonly reducedMotion: boolean,
   ) {
+    this.startFrame = root.querySelector<HTMLElement>('.start-frame');
     for (const clip of CROWD_CLIPS) {
       const video = root.querySelector<HTMLVideoElement>(`video[data-crowd="${clip}"]`);
       if (!video) {
@@ -51,7 +54,40 @@ export class Crowd {
     this.setLevel('watching');
   }
 
-  /** Browsers may block autoplay until a gesture; call this again from a key handler. */
+  /** Show the opening still and hold the clips at their first frame. */
+  showStart(): void {
+    window.clearTimeout(this.zoomTimer);
+    this.root.classList.remove('is-settling');
+    if (this.startFrame) {
+      this.startFrame.hidden = false;
+      this.startFrame.classList.remove('is-zooming');
+    }
+    for (const video of this.videos.values()) {
+      video.pause();
+      try {
+        video.currentTime = 0;
+      } catch {
+        // not seekable yet
+      }
+    }
+  }
+
+  /** Zoom through the opening still into the crowd and start the clips. Called on perform. */
+  begin(): void {
+    void this.play();
+    if (!this.startFrame || this.startFrame.hidden) return;
+    this.root.classList.add('is-settling');
+    this.startFrame.classList.add('is-zooming');
+    const frame = this.startFrame;
+    window.clearTimeout(this.zoomTimer);
+    this.zoomTimer = window.setTimeout(() => {
+      frame.hidden = true;
+      frame.classList.remove('is-zooming');
+      this.root.classList.remove('is-settling');
+    }, this.reducedMotion ? 50 : 1700);
+  }
+
+  /** Muted clips may play without a gesture, but a failed play() must never break the stage. */
   async play(): Promise<void> {
     for (const video of this.videos.values()) {
       try {

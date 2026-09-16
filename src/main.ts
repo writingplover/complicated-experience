@@ -76,7 +76,6 @@ const actions: DeckActions = {
     } else if (machine.state === 'final') {
       machine.set('idle');
     }
-    void crowd.play();
   },
   skip() {
     if (machine.state === 'calibrate') skipCalibration();
@@ -275,6 +274,7 @@ function resetRun(): void {
   presentSince = null;
   lastLevel = 'watching';
   crowd.setLevel('watching');
+  crowd.showStart();
   prompts.setMeter(0);
   prompts.countdown(null);
 }
@@ -304,7 +304,7 @@ function enter(state: StageState): void {
       prompts.countdown(null);
       performStartedMs = performance.now();
       void song.start();
-      void crowd.play();
+      crowd.begin();
       break;
     case 'final': {
       prompts.setPrompt('');
