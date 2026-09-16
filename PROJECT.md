@@ -3,7 +3,7 @@
 Living document. Read it before every action. Update it when you decide something or finish a
 milestone. Keep entries to one line each so parallel edits merge cleanly.
 
-Last updated: 2026-09-16 (pixel-art figure)
+Last updated: 2026-09-16 (deployed to Vercel)
 
 ## Status
 
@@ -19,6 +19,16 @@ Last updated: 2026-09-16 (pixel-art figure)
 - The song must be dropped at `public/local/complicated.mp3` on each machine. The folder is
   gitignored and audio files are ignored repo-wide. The repo is public.
 - Not production-grade: no tests, no bundle budget, no browser matrix beyond current Chrome.
+
+## Deployment
+
+- Live at **https://complicated-experience.vercel.app** (Vercel project `complicated-experience`
+  in the `writingplovers-projects` scope, static Vite build, HTTPS so the camera works).
+- Deploy from this folder with `vercel deploy --prod` (the CLI must be logged in). `.vercelignore`
+  keeps `public/local/` and every audio file out of the upload, so the deployed site has **no
+  song**: a run there lasts 60 s in silence and the idle prompt says so. The song only plays on a
+  machine with the MP3 in `public/local/`.
+- Git integration is not connected; deploys are manual from the CLI.
 
 ## Context
 
@@ -247,6 +257,7 @@ Model and WASM load from third-party CDNs at runtime. No error tracking, no anal
 | 2026-09-16 | Legendary hard-locked for the first 30 s of the song | It was reachable early with the streak bonus; the opening must never peak |
 | 2026-09-16 | Debug panel removed | Not needed on stage; the deck and the meter show what matters |
 | 2026-09-16 | Figure rendered as palette-snapped pixel art at 4 CSS px per pixel | "More pixelated, Winamp style"; a true low-res render beats a blur filter |
+| 2026-09-16 | Deployed to Vercel from the CLI, without the recording | Shareable HTTPS URL for the camera; the song stays off the public site |
 | 2026-09-16 | Share frame is the real camera image at the freeze moment, figure faintly overlaid | A photo is the thing people actually want to keep; still local-only, nothing uploaded |
 | 2026-09-16 | Crowd clips hard-cut instead of crossfading | Cuts feel like a live broadcast; blends looked muddy |
 | 2026-09-16 | Fourth clip "hyped" for Roaring; the excited clip appears only at Legendary | The hardest level deserves footage nobody has seen yet in the run |
