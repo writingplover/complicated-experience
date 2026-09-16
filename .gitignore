@@ -4,3 +4,12 @@ dist/
 .env
 .env.*
 *.log
+
+# The recording never enters the public repo. Drop it at public/local/complicated.mp3 locally.
+public/local/
+*.mp3
+*.m4a
+*.wav
+*.aac
+*.flac
+*.ogg

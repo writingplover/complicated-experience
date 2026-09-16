@@ -4,11 +4,64 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="dark" />
-    <title>Complicated</title>
+    <title>Air Stage</title>
   </head>
   <body>
-    <nav id="nav" class="shell-nav" aria-label="Scenes"></nav>
-    <main id="app"></main>
+    <main id="stage" class="stage" data-state="idle" data-level="watching">
+      <div id="crowd" class="crowd">
+        <video data-crowd="bored" src="/crowd/crowd-1-bored.mp4" muted loop playsinline preload="auto"></video>
+        <video data-crowd="mid" src="/crowd/crowd-2-mid.mp4" muted loop playsinline preload="auto"></video>
+        <video data-crowd="excited" src="/crowd/crowd-3-excited.mp4" muted loop playsinline preload="auto"></video>
+        <div class="crowd-fallback"></div>
+        <div class="lights"></div>
+      </div>
+
+      <video id="camera" class="camera" muted playsinline></video>
+      <canvas id="figure" class="figure"></canvas>
+      <div id="flash" class="flash"></div>
+
+      <div id="hud" class="hud">
+        <div class="hud-pill">
+          <span class="hud-energy">ENERGY 0</span>
+          <span class="hud-sep">·</span>
+          <span class="hud-level">WATCHING</span>
+        </div>
+        <div class="hud-meter"><div class="hud-meter-fill"></div></div>
+        <div class="hud-levels">
+          <span data-level="watching">Watching</span>
+          <span data-level="nodding">Nodding</span>
+          <span data-level="moving">Moving</span>
+          <span data-level="roaring">Roaring</span>
+          <span data-level="legendary">Legendary</span>
+        </div>
+      </div>
+
+      <div id="prompt" class="prompt">
+        <div class="prompt-ring" hidden></div>
+        <h1 class="prompt-title"></h1>
+        <p class="prompt-sub"></p>
+      </div>
+      <div id="countdown" class="countdown" hidden></div>
+      <div id="callout" class="callout"></div>
+
+      <p class="privacy">Camera frames stay in this browser. Nothing is recorded or uploaded.</p>
+      <p id="hint" class="hint"></p>
+
+      <aside id="debug" class="debug" hidden></aside>
+
+      <section id="final" class="final" hidden>
+        <div class="final-inner">
+          <canvas class="final-canvas"></canvas>
+          <p class="final-kicker">Hero pose</p>
+          <h2 class="final-title"></h2>
+          <p class="final-score"></p>
+          <div class="final-actions">
+            <button class="final-download" type="button">Download frame</button>
+            <button class="final-again" type="button">Perform again</button>
+          </div>
+        </div>
+      </section>
+    </main>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
