@@ -27,6 +27,10 @@ const DROP_MARGIN = 5;
 const DROP_HOLD_MS = 1000;
 const PEAK_HOLD_MS = 2000;
 const AUTO_HAND_MS = 5000;
+/** Raw energy is pushed through this curve; > 1 makes the top of the meter harder to reach. */
+const ENERGY_GAMMA = 1.25;
+/** Legendary only triggers after the energy has sat above its floor for this long. */
+const LEGENDARY_HOLD_MS = 1500;
 
 /**
  * Five movement signals → energy 0..100 → crowd level. Pure logic, no DOM.
@@ -53,6 +57,7 @@ export class EnergyEngine {
   private energySum = 0;
   private energyCount = 0;
   private levelSince: number | null = null;
+  private legendarySince: number | null = null;
   private peakLevel: Level = 'watching';
   private peakAt = 0;
 
@@ -96,6 +101,7 @@ export class EnergyEngine {
     this.energySum = 0;
     this.energyCount = 0;
     this.levelSince = null;
+    this.legendarySince = null;
     this.peakLevel = 'watching';
     this.peakAt = 0;
   }
@@ -166,7 +172,7 @@ export class EnergyEngine {
 
     let raw = 0;
     for (const key of SIGNAL_KEYS) raw += WEIGHTS[key] * this.signals[key];
-    raw *= 100;
+    raw = 100 * Math.pow(clamp01(raw), ENERGY_GAMMA);
     if (streakHit) this.energy = Math.min(100, this.energy + 5);
 
     const alpha = raw > this.energy ? RISE : FALL;
@@ -198,7 +204,13 @@ export class EnergyEngine {
   }
 
   private updateLevel(t: number): void {
-    const target = levelFor(this.energy);
+    let target = levelFor(this.energy);
+    if (target === 'legendary' && this.level !== 'legendary') {
+      this.legendarySince ??= t;
+      if (t - this.legendarySince < LEGENDARY_HOLD_MS) target = 'roaring';
+    } else if (target !== 'legendary') {
+      this.legendarySince = null;
+    }
     if (levelIndex(target) > levelIndex(this.level)) {
       this.level = target;
       this.levelSince = t;

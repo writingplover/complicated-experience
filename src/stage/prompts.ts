@@ -3,7 +3,7 @@ export interface PromptElements {
   countdown: HTMLElement;
   callout: HTMLElement;
   hint: HTMLElement;
-  meterFill: HTMLElement;
+  meter: HTMLElement;
 }
 
 /** Centre prompts, countdown digits, transient callouts, the key hint and the vertical meter. */
@@ -35,7 +35,7 @@ export class Prompts {
 
   /** The vertical excitement meter, 0..100. No labels, the height is the message. */
   setMeter(energy: number): void {
-    this.el.meterFill.style.height = `${Math.max(0, Math.min(100, energy))}%`;
+    this.el.meter.style.setProperty('--e', String(Math.max(0, Math.min(100, energy)) / 100));
   }
 
   countdown(value: number | null): void {

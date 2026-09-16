@@ -82,14 +82,14 @@ export class FinalOverlay {
     ctx.font = '700 26px Silkscreen, ui-monospace, monospace';
     ctx.fillText('AIR STAGE  ·  COMPLICATED', 80, 70);
     ctx.fillStyle = '#f4f1ea';
-    ctx.font = '900 96px "Arial Black", Impact, sans-serif';
+    ctx.font = '700 84px Silkscreen, "Arial Black", Impact, sans-serif';
     ctx.fillText(title.toUpperCase(), 80, 110);
     ctx.font = '700 40px Silkscreen, ui-monospace, monospace';
     ctx.fillStyle = '#ff0099';
     ctx.fillText(`SCORE ${data.score}`, 80, H - 150);
     ctx.fillStyle = 'rgba(244, 241, 234, 0.6)';
-    ctx.font = '400 26px system-ui, sans-serif';
-    ctx.fillText('Played to Avril Lavigne’s Complicated. Nothing was recorded.', 80, H - 90);
+    ctx.font = '400 22px Silkscreen, ui-monospace, monospace';
+    ctx.fillText('PLAYED TO AVRIL LAVIGNE’S COMPLICATED. NOTHING WAS RECORDED.', 80, H - 90);
   }
 
   private save(): void {

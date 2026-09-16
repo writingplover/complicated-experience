@@ -16,7 +16,7 @@ export function createDemoPose(bpm: number): PoseSource {
     const intensity = 0.5 - 0.5 * Math.cos((t / CYCLE_SECONDS) * Math.PI * 2);
     const beatHz = bpm / 60;
     const strumHz = intensity < 0.3 ? beatHz / 2 : intensity < 0.7 ? beatHz : beatHz * 2;
-    const bounce = Math.sin(t * Math.PI * 2 * beatHz) * 0.02 * intensity;
+    const bounce = Math.sin(t * Math.PI * 2 * beatHz) * (0.02 + 0.04 * Math.max(0, intensity - 0.6)) * intensity;
     const sway = Math.sin(t * 0.7) * 0.04 * intensity;
     const sw = 0.16;
     const cx = 0.5 + sway;
@@ -38,7 +38,7 @@ export function createDemoPose(bpm: number): PoseSource {
     const nose = pt(cx + Math.sin(t * beatHz * Math.PI * 2) * 0.012 * intensity, shoulderY - 0.13 + bounce * 0.5);
 
     // Right hand strums near the waist, left hand frets out to the side.
-    const strumSwing = Math.sin(t * Math.PI * 2 * strumHz) * (0.05 + 0.13 * intensity);
+    const strumSwing = Math.sin(t * Math.PI * 2 * strumHz) * (0.05 + 0.2 * intensity);
     const rWrist = armsUp ? pt(cx - sw * 0.6, shoulderY - 0.35) : pt(cx - sw * 0.1, shoulderY + 0.2 + strumSwing);
     const lWrist = armsUp
       ? pt(cx + sw * 0.6, shoulderY - 0.35)

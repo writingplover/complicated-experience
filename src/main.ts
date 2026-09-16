@@ -40,7 +40,7 @@ const prompts = new Prompts({
   countdown: $('#countdown'),
   callout: $('#callout'),
   hint: $('#hint'),
-  meterFill: $('#meter-fill'),
+  meter: $('#meter'),
 });
 const crowd = new Crowd($('#crowd'), stage, $('#flash'), reducedMotion);
 const debug = new DebugPanel($('#debug'));

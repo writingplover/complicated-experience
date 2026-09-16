@@ -1,9 +1,10 @@
 import { LM, dist, otherHand, wristOf } from './types';
 import type { Hand, Landmarks, Level, Point } from './types';
 
-const INK = '#f4f1ea';
-const GUITAR = '#2ee6a6';
-const GLOW = '#ff2d95';
+const INK = '#ffd6ee';
+const OUTLINE = '#000000';
+const GUITAR = '#ff0099';
+const GLOW = '#ff0099';
 
 export interface StrokeOptions {
   color?: string;
@@ -90,40 +91,19 @@ export class FigureRenderer {
     const rh = P(LM.rightHip);
     const nose = P(LM.nose);
     const sw = Math.max(24, dist(ls, rs));
+    const limb = sw * 0.22;
+    const edge = Math.max(2, sw * 0.07);
+    const head = { x: nose.x, y: nose.y - sw * 0.05 };
+    const headR = sw * 0.3;
+    const limbs = [
+      [lh, P(LM.leftKnee), P(LM.leftAnkle)],
+      [rh, P(LM.rightKnee), P(LM.rightAnkle)],
+      [ls, P(LM.leftElbow), P(LM.leftWrist)],
+      [rs, P(LM.rightElbow), P(LM.rightWrist)],
+    ];
+    const torso = [ls, rs, rh, lh];
 
-    ctx.save();
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    if (level === 'legendary' || level === 'roaring') {
-      ctx.shadowColor = level === 'legendary' ? GLOW : GUITAR;
-      ctx.shadowBlur = level === 'legendary' ? sw * 0.6 : sw * 0.3;
-    }
-
-    // Limbs
-    ctx.strokeStyle = INK;
-    ctx.lineWidth = sw * 0.22;
-    this.polyline([lh, P(LM.leftKnee), P(LM.leftAnkle)]);
-    this.polyline([rh, P(LM.rightKnee), P(LM.rightAnkle)]);
-    this.polyline([ls, P(LM.leftElbow), P(LM.leftWrist)]);
-    this.polyline([rs, P(LM.rightElbow), P(LM.rightWrist)]);
-
-    // Torso
-    ctx.fillStyle = INK;
-    ctx.beginPath();
-    ctx.moveTo(ls.x, ls.y);
-    ctx.lineTo(rs.x, rs.y);
-    ctx.lineTo(rh.x, rh.y);
-    ctx.lineTo(lh.x, lh.y);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-
-    // Head
-    ctx.beginPath();
-    ctx.arc(nose.x, nose.y - sw * 0.05, sw * 0.3, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Guitar: body at the strumming hand, neck towards the fretting hand.
+    // Guitar geometry: body at the strumming hand, neck towards the fretting hand.
     const strum = P(wristOf(dominant));
     const fret = P(wristOf(otherHand(dominant)));
     const dx = fret.x - strum.x;
@@ -133,16 +113,62 @@ export class FigureRenderer {
     const uy = dy / len;
     const body = { x: strum.x + ux * sw * 0.25, y: strum.y + uy * sw * 0.25 };
     const neckEnd = { x: fret.x + ux * sw * 0.35, y: fret.y + uy * sw * 0.35 };
+    const angle = Math.atan2(uy, ux);
 
-    ctx.shadowBlur = 0;
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    // Pass 1: glow behind everything at the top two levels.
+    if (level === 'legendary' || level === 'roaring') {
+      ctx.save();
+      ctx.shadowColor = GLOW;
+      ctx.shadowBlur = level === 'legendary' ? sw * 0.7 : sw * 0.35;
+      ctx.strokeStyle = GLOW;
+      ctx.lineWidth = limb;
+      for (const line of limbs) this.polyline(line);
+      ctx.fillStyle = GLOW;
+      this.polygon(torso, true, false);
+      ctx.restore();
+    }
+
+    // Pass 2: black outlines, drawn fat so they peek out around the pink fills.
+    ctx.strokeStyle = OUTLINE;
+    ctx.fillStyle = OUTLINE;
+    ctx.lineWidth = limb + edge * 2;
+    for (const line of limbs) this.polyline(line);
+    ctx.lineWidth = edge * 2;
+    this.polygon(torso, true, true);
+    ctx.beginPath();
+    ctx.arc(head.x, head.y, headR + edge, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Pass 3: pale pink fills.
+    ctx.strokeStyle = INK;
+    ctx.fillStyle = INK;
+    ctx.lineWidth = limb;
+    for (const line of limbs) this.polyline(line);
+    this.polygon(torso, true, false);
+    ctx.beginPath();
+    ctx.arc(head.x, head.y, headR, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Pass 4: the guitar, hot pink with its own black outline, on top of the arms.
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = sw * 0.12 + edge * 2;
+    this.polyline([body, neckEnd]);
+    ctx.fillStyle = OUTLINE;
+    ctx.beginPath();
+    ctx.ellipse(body.x, body.y, sw * 0.42 + edge, sw * 0.3 + edge, angle, 0, Math.PI * 2);
+    ctx.fill();
     ctx.strokeStyle = GUITAR;
     ctx.lineWidth = sw * 0.12;
     this.polyline([body, neckEnd]);
     ctx.fillStyle = GUITAR;
     ctx.beginPath();
-    ctx.ellipse(body.x, body.y, sw * 0.42, sw * 0.3, Math.atan2(uy, ux), 0, Math.PI * 2);
+    ctx.ellipse(body.x, body.y, sw * 0.42, sw * 0.3, angle, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#0b0b0d';
+    ctx.fillStyle = OUTLINE;
     ctx.beginPath();
     ctx.arc(body.x - ux * sw * 0.1, body.y - uy * sw * 0.1, sw * 0.09, 0, Math.PI * 2);
     ctx.fill();
@@ -170,6 +196,16 @@ export class FigureRenderer {
     const H = this.canvas.height;
     const contentH = Math.max(H, W / this.sourceAspect);
     return contentH * this.sourceAspect;
+  }
+
+  private polygon(points: Point[], fill: boolean, stroke: boolean): void {
+    const { ctx } = this;
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) ctx.lineTo(points[i].x, points[i].y);
+    ctx.closePath();
+    if (fill) ctx.fill();
+    if (stroke) ctx.stroke();
   }
 
   private polyline(points: Point[]): void {

@@ -31,12 +31,13 @@ export type Hand = 'left' | 'right';
 
 export const LEVELS = ['watching', 'nodding', 'moving', 'roaring', 'legendary'] as const;
 export type Level = (typeof LEVELS)[number];
+/** Energy floors per level. Legendary also needs the energy held for a while, see EnergyEngine. */
 export const LEVEL_FLOOR: Record<Level, number> = {
   watching: 0,
-  nodding: 20,
-  moving: 40,
-  roaring: 60,
-  legendary: 80,
+  nodding: 22,
+  moving: 45,
+  roaring: 68,
+  legendary: 90,
 };
 
 export interface PoseFrame {

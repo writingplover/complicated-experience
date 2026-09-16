@@ -3,7 +3,7 @@
 Living document. Read it before every action. Update it when you decide something or finish a
 milestone. Keep entries to one line each so parallel edits merge cleanly.
 
-Last updated: 2026-09-16 (UI redesign: meter, PiP, compact deck; real crowd clips)
+Last updated: 2026-09-16 (Winamp skin on meter, player and typography; harder Legendary)
 
 ## Status
 
@@ -77,15 +77,19 @@ Single full-screen page. Static layers in `index.html`, one TypeScript module pe
 
 The crowd video is the stage. Everything else stays out of its way.
 
-- **Excitement meter**: a tall rounded pink bar along the left edge, filled from the bottom by
-  energy 0–100. No labels, no numbers; the height is the message. Glows harder at Legendary.
-- **Player panel**: a small portrait rounded panel bottom right with the mirrored, dimmed camera
-  feed and the stick-figure guitarist drawn over it. Small on purpose: the focus is the crowd.
+- **Excitement meter**: a Winamp slider stood upright along the left edge: bevelled black-bordered
+  track, segmented hot pink LED fill, a slider handle riding on top, filled by energy 0–100. No
+  labels, no numbers; the height is the message. Glows harder at Legendary.
+- **Player panel**: the Winamp "video window" bottom right, portrait: title bar, bevels, faint
+  scanlines, the camera feed tinted pink and dimmed, the guitarist drawn over it in pale pink with
+  black outlines and a hot pink guitar. Small on purpose: the focus is the crowd.
 - **Deck**: one compact Winamp-flavoured bar top right, hot pink (`#ff0099`, 2 px black borders,
   Silkscreen pixel font): LCD clock, 19-bar spectrum fed by the five signals, title marquee, song
   progress, transport (reset, start, end, skip, camera/demo), ghost toggle, perform again. Only the
   Winamp elements the stage needs; no EQ, no playlist, no fake stats.
 - Prompts, countdown and callouts stay centred over the crowd. The debug panel docks under the deck.
+- **Typography**: everything is set in Silkscreen (Google Fonts pixel font), uppercase, with hard
+  pink and black drop shadows on the big words. Fallback is the system monospace when offline.
 
 ## Pose sensor
 
@@ -106,10 +110,12 @@ The crowd video is the stage. Everything else stays out of its way.
 | Scale | dominant wrist to same-side shoulder, rolling max over 1 s | 0.5–1.6 sw → 0–1 | 15% |
 | Variety | distinct coarse poses (wrist cells relative to torso, lean sign) in a 6 s window | count/8 → 0–1 | 10% |
 
-- Raw energy = 100 × weighted sum. Smoothed energy rises with factor 0.25 per frame and falls
-  with 0.03 per frame (fast rise, slow fall). No person → signals decay to zero.
-- Levels: Watching < 20, Nodding 20–40, Moving 40–60, Roaring 60–80, Legendary ≥ 80. Dropping a
-  level requires energy 5 below the threshold for 1 s (hysteresis). Rising is immediate.
+- Raw energy = 100 × (weighted sum)^1.25. The curve makes the top of the meter harder to reach:
+  a weighted sum of 0.8 gives 76, not 80. Smoothed energy rises with factor 0.25 per frame and
+  falls with 0.03 per frame (fast rise, slow fall). No person → signals decay to zero.
+- Levels: Watching < 22, Nodding 22–45, Moving 45–68, Roaring 68–90, Legendary ≥ 90. Legendary
+  also needs the energy above 90 for 1.5 s before it triggers. Dropping a level requires energy 5
+  below the threshold for 1 s (hysteresis). Rising to the other levels is immediate.
 - Beat streak: 4 consecutive on-beat peaks trigger a callout and a small energy bonus.
 - Target visible latency under 150 ms: no extra buffering between landmarks and the crowd.
 
@@ -218,6 +224,9 @@ Model and WASM load from third-party CDNs at runtime. No error tracking, no anal
 | 2026-09-16 | Excitement shown as a vertical pink meter on the left, no labels | The mock: a visual indicator, not a dashboard |
 | 2026-09-16 | Winamp influence limited to a compact hot pink deck (clock, spectrum, title, progress, transport) | User asked for the necessary elements only, not a one-to-one copy |
 | 2026-09-16 | Crowd clips committed as 720p transcodes of the generated originals | Keeps the repo under a few MB while the clips sit dimmed behind everything |
+| 2026-09-16 | Winamp skin applied to the meter (upright slider) and the player panel (video window); figure in pale pink with black outlines | User request; ties the three visible elements into one skin |
+| 2026-09-16 | Legendary is harder: energy curve ^1.25, floors 22/45/68/90, Legendary needs 1.5 s above 90 | Top level came too easily; it should feel earned |
+| 2026-09-16 | All typography in the Silkscreen pixel font | One skin for every visible element, as requested |
 
 ## Open questions
 
