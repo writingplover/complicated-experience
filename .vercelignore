@@ -1,0 +1,12 @@
+# Vercel CLI upload list. The recording must never leave this machine.
+node_modules
+dist
+.git
+public/local
+*.mp3
+*.m4a
+*.wav
+*.aac
+*.flac
+*.ogg
+.DS_Store

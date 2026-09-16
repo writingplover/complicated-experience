@@ -3,17 +3,21 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "packageManager": "pnpm@11.10.0",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "vite",
     "typecheck": "tsc --noEmit",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview"
   },
+  "dependencies": {
+    "@mediapipe/tasks-vision": "^1.0.1"
+  },
   "devDependencies": {
     "typescript": "^7.0.2",
     "vite": "^8.3.0"
-  },
-  "dependencies": {
-    "@mediapipe/tasks-vision": "^1.0.1"
   }
 }

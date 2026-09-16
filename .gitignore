@@ -13,3 +13,6 @@ public/local/
 *.aac
 *.flac
 *.ogg
+
+# Vercel project link
+.vercel
